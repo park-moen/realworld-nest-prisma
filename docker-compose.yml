@@ -1,0 +1,18 @@
+services:
+  # Docker connection string: postgres://postgres:postgres@localhost:5432/
+  db:
+    image: postgres:16
+    container_name: medium-clone-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_INITDB_ARGS: "-A md5"
+    volumes:
+      - medium_db:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:5432"
+
+volumes:
+  medium_db:
