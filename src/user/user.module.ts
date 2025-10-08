@@ -4,6 +4,7 @@ import { UserService } from './user.service';
 import { PrismaModule } from '@app/prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { AuthModule } from '@app/auth/auth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ConfigService } from '@nestjs/config';
         signOptions: { expiresIn: config.get<string>('JWT_ACCESS_EXPIRES') },
       }),
     }),
+    AuthModule,
   ],
   controllers: [UserController],
   providers: [UserService],
