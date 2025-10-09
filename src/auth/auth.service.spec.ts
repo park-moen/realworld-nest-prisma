@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { randomUUID } from 'crypto';
 import { AuthService } from './auth.service';
 
 jest.mock('bcrypt', () => ({
@@ -10,8 +12,9 @@ jest.mock('bcrypt', () => ({
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
-  let service: AuthService;
+  let authService: AuthService;
   let config: ConfigService;
+  let jwtService: JwtService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -26,18 +29,25 @@ describe('AuthService', () => {
             }),
           },
         },
+        {
+          provide: JwtService,
+          useValue: {
+            sign: jest.fn().mockReturnValue('mocked.jwt.token'),
+          },
+        },
       ],
     }).compile();
 
-    service = module.get<AuthService>(AuthService);
+    authService = module.get<AuthService>(AuthService);
     config = module.get<ConfigService>(ConfigService);
+    jwtService = module.get<JwtService>(JwtService);
     jest.clearAllMocks();
   });
 
   it('hashPassword()는 bcrypt.hash를 Config 라운드로 호출한다.', async () => {
     (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-value');
 
-    const result = await service.hashPassword('plain');
+    const result = await authService.hashPassword('plain');
     expect(bcrypt.hash).toHaveBeenCalledWith('plain', 12);
     expect(result).toBe('hashed-value');
   });
@@ -45,7 +55,7 @@ describe('AuthService', () => {
   it('validatePassword()는 bcrypt.compare를 호출하고 결과를 그대로 반환한다.', async () => {
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-    const ok = await service.validatePassword('plain', 'stored');
+    const ok = await authService.validatePassword('plain', 'stored');
     expect(bcrypt.compare).toHaveBeenCalledWith('plain', 'stored');
     expect(ok).toBe(true);
   });
@@ -54,7 +64,14 @@ describe('AuthService', () => {
     (config.get as jest.Mock).mockReturnValueOnce(undefined);
 
     const module = await Test.createTestingModule({
-      providers: [AuthService, { provide: ConfigService, useValue: config }],
+      providers: [
+        AuthService,
+        { provide: ConfigService, useValue: config },
+        {
+          provide: JwtService,
+          useValue: { sign: jest.fn() },
+        },
+      ],
     }).compile();
 
     const service = module.get(AuthService);
@@ -62,5 +79,16 @@ describe('AuthService', () => {
 
     await service.hashPassword('plain');
     expect(bcrypt.hash).toHaveBeenCalledWith('plain', 12);
+  });
+
+  it('generateJWT()는 sub에 id를 담아 jwt.sign을 호출한다.', () => {
+    const id = randomUUID();
+    const token = authService.generateJWT(id);
+
+    // jwt.sign()이 정확히 호출되었는지 확인
+    expect(jwtService.sign).toHaveBeenCalledWith({ sub: id });
+
+    // 반환값이 mock된 토큰인지 확인
+    expect(token).toBe('mocked.jwt.token');
   });
 });
