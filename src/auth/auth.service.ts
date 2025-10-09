@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
   private readonly round: number;
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly jwtService: JwtService,
+  ) {
     this.round = Number(config.get('BCRYPT_ROUNDS') ?? 12);
   }
 
@@ -20,5 +24,7 @@ export class AuthService {
     return await bcrypt.compare(password, storedHash);
   }
 
+  generateJWT(id: string): any {
+    return this.jwtService.sign({ sub: id });
   }
 }
