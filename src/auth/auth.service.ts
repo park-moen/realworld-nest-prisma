@@ -10,13 +10,15 @@ export class AuthService {
   }
 
   async hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, this.round);
+    return await bcrypt.hash(password, this.round);
   }
 
   async validatePassword(
     password: string,
     storedHash: string,
   ): Promise<boolean> {
-    return bcrypt.compare(password, storedHash);
+    return await bcrypt.compare(password, storedHash);
+  }
+
   }
 }
