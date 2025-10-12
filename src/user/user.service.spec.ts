@@ -2,31 +2,25 @@ import { randomUUID } from 'crypto';
 import { Test } from '@nestjs/testing';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { UserService } from './user.service';
-import { PrismaService } from '@app/prisma/prisma.service';
 import { AuthService } from '@app/auth/auth.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { UserRepository } from './user.repository';
 
 describe('UserService', () => {
   let service: UserService;
-  let prisma: { user: { findUnique: jest.Mock; create: jest.Mock } };
-  let auth: { hashPassword: jest.Mock };
+  const repository = {
+    findByEmail: jest.fn(),
+    create: jest.fn(),
+  };
+  const auth = {
+    hashPassword: jest.fn(),
+    generateJWT: jest.fn(),
+  };
 
   beforeEach(async () => {
-    prisma = {
-      user: {
-        findUnique: jest.fn(),
-        create: jest.fn(),
-      },
-    };
-
-    auth = {
-      hashPassword: jest.fn(),
-    };
-
     const module = await Test.createTestingModule({
       providers: [
         UserService,
-        { provide: PrismaService, useValue: prisma },
+        { provide: UserRepository, useValue: repository },
         { provide: AuthService, useValue: auth },
       ],
     }).compile();
@@ -36,10 +30,7 @@ describe('UserService', () => {
   });
 
   it('이미 존재하는 이메일이면 BAD_REQUEST 예외를 던진다.', async () => {
-    prisma.user.findUnique.mockResolvedValue({
-      id: randomUUID(),
-      email: 'a@a.com',
-    });
+    repository.findByEmail.mockResolvedValue({ id: randomUUID() } as any);
 
     await expect(
       service.createUser({
@@ -50,25 +41,23 @@ describe('UserService', () => {
     ).rejects.toEqual(
       new HttpException('User already exists', HttpStatus.BAD_REQUEST),
     );
-
-    expect(prisma.user.findUnique).toHaveBeenCalledWith({
-      where: { email: 'a@a.com' },
-    });
+    expect(repository.findByEmail).toHaveBeenCalledWith('a@a.com');
     expect(auth.hashPassword).not.toHaveBeenCalled();
-    expect(prisma.user.create).not.toHaveBeenCalled();
+    expect(repository.create).not.toHaveBeenCalled();
   });
 
   it('존재하지 않으면 비밀번호를 해싱하고 사용자 생성한다', async () => {
-    prisma.user.findUnique.mockResolvedValue(null);
+    repository.findByEmail.mockResolvedValue(null);
     auth.hashPassword.mockResolvedValue('bcrypt-hash');
 
     const userId = randomUUID();
-    prisma.user.create.mockResolvedValue({
+    repository.create.mockResolvedValue({
       id: userId,
       email: 'b@b.com',
       username: 'mj',
-      passwordHash: 'bcrypt-hash',
+      password: 'bcrypt-hash',
     });
+    auth.generateJWT.mockReturnValue('mocked.jwt.token');
 
     const createUserDto = {
       email: 'b@b.com',
@@ -77,18 +66,12 @@ describe('UserService', () => {
     };
     const created = await service.createUser(createUserDto as any);
 
-    expect(prisma.user.findUnique).toHaveBeenCalledWith({
-      where: { email: 'b@b.com' },
-    });
+    expect(repository.findByEmail).toHaveBeenCalledWith('b@b.com');
     expect(auth.hashPassword).toHaveBeenCalledWith('pw');
-    expect(prisma.user.create).toHaveBeenCalledWith({
-      data: {
-        ...createUserDto,
-        passwordHash: 'bcrypt-hash',
-      },
-    });
-
-    expect(typeof created.id).toBe('string');
-    expect(created.id).toHaveLength(36);
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ password: 'bcrypt-hash' }),
+    );
+    expect(created.user.email).toBe('b@b.com');
+    expect(created.user.token).toBe('mocked.jwt.token');
   });
 });
