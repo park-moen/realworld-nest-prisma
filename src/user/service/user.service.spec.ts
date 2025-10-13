@@ -13,6 +13,7 @@ describe('UserService', () => {
   };
   const auth = {
     hashPassword: jest.fn(),
+    comparePassword: jest.fn(),
     generateJWT: jest.fn(),
   };
 
@@ -73,5 +74,84 @@ describe('UserService', () => {
     );
     expect(created.user.email).toBe('b@b.com');
     expect(created.user.token).toBe('mocked.jwt.token');
+  });
+
+  // UserService.login 메서드 관련 Test 코드
+  it('가입되지 않은 이메일이면 UNAUTHORIZED 예외를 던진다.', async () => {
+    repository.findByEmail.mockResolvedValue(null);
+
+    await expect(
+      service.login({ email: 'b@b.com', password: 'password1234' }),
+    ).rejects.toEqual(
+      new HttpException('Invalid email or password', HttpStatus.UNAUTHORIZED),
+    );
+
+    expect(repository.findByEmail).toHaveBeenCalledWith('b@b.com');
+    expect(auth.comparePassword).not.toHaveBeenCalled();
+    expect(auth.generateJWT).not.toHaveBeenCalled();
+  });
+
+  it('비밀번호가 일치하지 않으면 UNAUTHORIZED 예외를 던진다.', async () => {
+    const stored = {
+      id: randomUUID(),
+      email: 'mj@ex.com',
+      username: 'mj',
+      password: 'stored-bcrypt-hash',
+    };
+
+    repository.findByEmail.mockResolvedValue(stored);
+    auth.comparePassword.mockResolvedValue(false);
+
+    await expect(
+      service.login({ email: 'mj@ex.com', password: 'wrong' } as any),
+    ).rejects.toEqual(
+      new HttpException('Invalid email or password', HttpStatus.UNAUTHORIZED),
+    );
+
+    expect(repository.findByEmail).toHaveBeenCalledWith('mj@ex.com');
+    expect(auth.comparePassword).toHaveBeenCalledWith(
+      'wrong',
+      'stored-bcrypt-hash',
+    );
+    expect(auth.generateJWT).not.toHaveBeenCalled();
+  });
+
+  it('이메일/비밀번호가 맞으면 JWT를 발급하고 UserRepositoryDto를 반환한다.', async () => {
+    const stored = {
+      id: randomUUID(),
+      email: 'mj@ex.com',
+      username: 'mj',
+      password: 'stored-bcrypt-hash',
+      bio: null,
+      image: null,
+    };
+
+    repository.findByEmail.mockResolvedValue(stored);
+    auth.comparePassword.mockResolvedValue(true);
+    auth.generateJWT.mockReturnValue('mocked.jwt.token');
+
+    const response = await service.login({
+      email: 'mj@ex.com',
+      password: 'pw',
+    } as any);
+
+    expect(repository.findByEmail).toHaveBeenCalledWith('mj@ex.com');
+    expect(auth.comparePassword).toHaveBeenCalledWith(
+      'pw',
+      'stored-bcrypt-hash',
+    );
+    expect(auth.generateJWT).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: stored.id,
+        email: 'mj@ex.com',
+        username: 'mj',
+      }),
+    );
+
+    expect(response.user.email).toBe('mj@ex.com');
+    expect(response.user.username).toBe('mj');
+    expect(response.user.token).toBe('mocked.jwt.token');
+    expect(response.user.bio).toBeNull();
+    expect(response.user.image).toBeNull();
   });
 });
