@@ -13,7 +13,7 @@ describe('UserService', () => {
   };
   const auth = {
     hashPassword: jest.fn(),
-    comparePassword: jest.fn(),
+    validatePassword: jest.fn(),
     generateJWT: jest.fn(),
   };
 
@@ -87,7 +87,7 @@ describe('UserService', () => {
     );
 
     expect(repository.findByEmail).toHaveBeenCalledWith('b@b.com');
-    expect(auth.comparePassword).not.toHaveBeenCalled();
+    expect(auth.validatePassword).not.toHaveBeenCalled();
     expect(auth.generateJWT).not.toHaveBeenCalled();
   });
 
@@ -100,7 +100,7 @@ describe('UserService', () => {
     };
 
     repository.findByEmail.mockResolvedValue(stored);
-    auth.comparePassword.mockResolvedValue(false);
+    auth.validatePassword.mockResolvedValue(false);
 
     await expect(
       service.login({ email: 'mj@ex.com', password: 'wrong' } as any),
@@ -109,7 +109,7 @@ describe('UserService', () => {
     );
 
     expect(repository.findByEmail).toHaveBeenCalledWith('mj@ex.com');
-    expect(auth.comparePassword).toHaveBeenCalledWith(
+    expect(auth.validatePassword).toHaveBeenCalledWith(
       'wrong',
       'stored-bcrypt-hash',
     );
@@ -127,7 +127,7 @@ describe('UserService', () => {
     };
 
     repository.findByEmail.mockResolvedValue(stored);
-    auth.comparePassword.mockResolvedValue(true);
+    auth.validatePassword.mockResolvedValue(true);
     auth.generateJWT.mockReturnValue('mocked.jwt.token');
 
     const response = await service.login({
@@ -136,17 +136,11 @@ describe('UserService', () => {
     } as any);
 
     expect(repository.findByEmail).toHaveBeenCalledWith('mj@ex.com');
-    expect(auth.comparePassword).toHaveBeenCalledWith(
+    expect(auth.validatePassword).toHaveBeenCalledWith(
       'pw',
       'stored-bcrypt-hash',
     );
-    expect(auth.generateJWT).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: stored.id,
-        email: 'mj@ex.com',
-        username: 'mj',
-      }),
-    );
+    expect(auth.generateJWT).toHaveBeenCalledWith(stored.id);
 
     expect(response.user.email).toBe('mj@ex.com');
     expect(response.user.username).toBe('mj');
