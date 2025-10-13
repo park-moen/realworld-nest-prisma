@@ -4,6 +4,7 @@ import { CreateUserDto } from '../dto/request/create-user.dto';
 import { UserResponseDto } from '../dto/response/user.response.dto';
 import { UserMapper } from '../user.mapper';
 import { UserRepository } from '../repository/user.repository';
+import { LoginUserDto } from '../dto/request/login-user.dto';
 
 @Injectable()
 export class UserService {
@@ -26,6 +27,29 @@ export class UserService {
       ...createUserDto,
       password: passwordHashed,
     });
+    const token = this.authService.generateJWT(user.id);
+    const clear = UserMapper.toClearUserDto(user, token);
+
+    return UserMapper.toUserResponse(clear);
+  }
+
+  async login(loginUserDto: LoginUserDto): Promise<UserResponseDto> {
+    const INVALID = new HttpException(
+      'Invalid email or password',
+      HttpStatus.UNAUTHORIZED,
+    );
+    const { email, password } = loginUserDto;
+
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      throw INVALID;
+    }
+
+    const ok = await this.authService.validatePassword(password, user.password);
+    if (!ok) {
+      throw INVALID;
+    }
+
     const token = this.authService.generateJWT(user.id);
     const clear = UserMapper.toClearUserDto(user, token);
 
