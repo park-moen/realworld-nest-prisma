@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { UserService } from '../service/user.service';
 import { CreateUserDto } from '../dto/request/create-user.dto';
 import { UserResponseDto } from '../dto/response/user.response.dto';
@@ -16,6 +16,7 @@ export class UserController {
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   async login(
     @Body('user') loginUserDto: LoginUserDto,
   ): Promise<UserResponseDto> {
