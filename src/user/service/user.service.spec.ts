@@ -1,9 +1,9 @@
 import { randomUUID } from 'crypto';
 import { Test } from '@nestjs/testing';
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { UserService } from './user.service';
 import { AuthService } from '@app/auth/auth.service';
-import { UserRepository } from './user.repository';
+import { UserService } from './user.service';
+import { UserRepository } from '../repository/user.repository';
 
 describe('UserService', () => {
   let service: UserService;

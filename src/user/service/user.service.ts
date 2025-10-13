@@ -1,9 +1,9 @@
 import { AuthService } from '@app/auth/auth.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/request/create-user.dto';
-import { UserResponseDto } from './dto/response/user.response.dto';
-import { UserMapper } from './user.mapper';
-import { UserRepository } from './user.repository';
+import { CreateUserDto } from '../dto/request/create-user.dto';
+import { UserResponseDto } from '../dto/response/user.response.dto';
+import { UserMapper } from '../user.mapper';
+import { UserRepository } from '../repository/user.repository';
 
 @Injectable()
 export class UserService {
