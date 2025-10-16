@@ -9,12 +9,7 @@ import {
 import { AuthService } from '@app/auth/auth.service';
 import { UserService } from './user.service';
 import { UserRepository } from '../repository/user.repository';
-
-class MockRefreshTokenRepository {
-  findById = jest.fn();
-  save = jest.fn();
-  revoke = jest.fn();
-}
+import { RefreshTokenRepository } from '@app/auth/repository/refresh-token.repository';
 
 describe('UserService.refresh', () => {
   let service: UserService;
@@ -25,22 +20,26 @@ describe('UserService.refresh', () => {
     hash: jest.fn(),
     compare: jest.fn(),
   };
-  let repository: MockRefreshTokenRepository;
+  const repository = {
+    findById: jest.fn(),
+    save: jest.fn(),
+    revoke: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       providers: [
         UserService,
         {
-          provide: 'RefreshTokenRepository',
-          useClass: MockRefreshTokenRepository,
+          provide: RefreshTokenRepository,
+          useValue: repository,
         },
         { provide: AuthService, useValue: auth },
+        { provide: UserRepository, useValue: null },
       ],
     }).compile();
 
     service = module.get<UserService>(UserService);
-    repository = module.get('RefreshTokenRepository');
 
     jest.clearAllMocks();
   });
@@ -77,24 +76,6 @@ describe('UserService.refresh', () => {
     );
   });
 
-  it('만료 -> 401', async () => {
-    (auth.verifyRefreshToken as jest.Mock).mockReturnValue({
-      sub: USER_ID,
-      jti: JTI,
-    });
-    repository.findById.mockResolvedValue({
-      id: JTI,
-      userId: USER_ID,
-      tokenHash: 'h',
-      expiresAt: new Date(Date.now() - 1000),
-      revokedAt: null,
-    });
-
-    await expect(service.refresh(RT)).rejects.toThrow(
-      new UnauthorizedException('Refresh token expired'),
-    );
-  });
-
   it('revoked -> 401', async () => {
     (auth.verifyRefreshToken as jest.Mock).mockReturnValue({
       sub: USER_ID,
@@ -113,6 +94,24 @@ describe('UserService.refresh', () => {
     );
   });
 
+  it('만료 -> 401', async () => {
+    (auth.verifyRefreshToken as jest.Mock).mockReturnValue({
+      sub: USER_ID,
+      jti: JTI,
+    });
+    repository.findById.mockResolvedValue({
+      id: JTI,
+      userId: USER_ID,
+      tokenHash: 'h',
+      expiresAt: new Date(Date.now() - 1000),
+      revokedAt: null,
+    });
+
+    await expect(service.refresh(RT)).rejects.toThrow(
+      new UnauthorizedException('Refresh token expired'),
+    );
+  });
+
   it('hash 불일치 -> 401', async () => {
     (auth.verifyRefreshToken as jest.Mock).mockReturnValue({
       sub: USER_ID,
@@ -127,7 +126,7 @@ describe('UserService.refresh', () => {
     });
     (auth.compare as jest.Mock).mockResolvedValue(false);
 
-    await expect(service.refresh).rejects.toThrow(
+    await expect(service.refresh(RT)).rejects.toThrow(
       new UnauthorizedException('Invalid refresh token'),
     );
   });
