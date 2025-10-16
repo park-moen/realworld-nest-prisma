@@ -12,9 +12,9 @@ describe('UserService', () => {
     create: jest.fn(),
   };
   const auth = {
-    hashPassword: jest.fn(),
-    validatePassword: jest.fn(),
-    generateJWT: jest.fn(),
+    hash: jest.fn(),
+    compare: jest.fn(),
+    signAccessToken: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -43,13 +43,13 @@ describe('UserService', () => {
       new HttpException('User already exists', HttpStatus.BAD_REQUEST),
     );
     expect(repository.findByEmail).toHaveBeenCalledWith('a@a.com');
-    expect(auth.hashPassword).not.toHaveBeenCalled();
+    expect(auth.hash).not.toHaveBeenCalled();
     expect(repository.create).not.toHaveBeenCalled();
   });
 
   it('존재하지 않으면 비밀번호를 해싱하고 사용자 생성한다', async () => {
     repository.findByEmail.mockResolvedValue(null);
-    auth.hashPassword.mockResolvedValue('bcrypt-hash');
+    auth.hash.mockResolvedValue('bcrypt-hash');
 
     const userId = randomUUID();
     repository.create.mockResolvedValue({
@@ -58,7 +58,7 @@ describe('UserService', () => {
       username: 'mj',
       password: 'bcrypt-hash',
     });
-    auth.generateJWT.mockReturnValue('mocked.jwt.token');
+    auth.signAccessToken.mockReturnValue('mocked.jwt.token');
 
     const createUserDto = {
       email: 'b@b.com',
@@ -68,7 +68,7 @@ describe('UserService', () => {
     const created = await service.createUser(createUserDto as any);
 
     expect(repository.findByEmail).toHaveBeenCalledWith('b@b.com');
-    expect(auth.hashPassword).toHaveBeenCalledWith('pw');
+    expect(auth.hash).toHaveBeenCalledWith('pw');
     expect(repository.create).toHaveBeenCalledWith(
       expect.objectContaining({ password: 'bcrypt-hash' }),
     );
@@ -87,8 +87,8 @@ describe('UserService', () => {
     );
 
     expect(repository.findByEmail).toHaveBeenCalledWith('b@b.com');
-    expect(auth.validatePassword).not.toHaveBeenCalled();
-    expect(auth.generateJWT).not.toHaveBeenCalled();
+    expect(auth.compare).not.toHaveBeenCalled();
+    expect(auth.signAccessToken).not.toHaveBeenCalled();
   });
 
   it('비밀번호가 일치하지 않으면 UNAUTHORIZED 예외를 던진다.', async () => {
@@ -100,7 +100,7 @@ describe('UserService', () => {
     };
 
     repository.findByEmail.mockResolvedValue(stored);
-    auth.validatePassword.mockResolvedValue(false);
+    auth.compare.mockResolvedValue(false);
 
     await expect(
       service.login({ email: 'mj@ex.com', password: 'wrong' } as any),
@@ -109,11 +109,8 @@ describe('UserService', () => {
     );
 
     expect(repository.findByEmail).toHaveBeenCalledWith('mj@ex.com');
-    expect(auth.validatePassword).toHaveBeenCalledWith(
-      'wrong',
-      'stored-bcrypt-hash',
-    );
-    expect(auth.generateJWT).not.toHaveBeenCalled();
+    expect(auth.compare).toHaveBeenCalledWith('wrong', 'stored-bcrypt-hash');
+    expect(auth.signAccessToken).not.toHaveBeenCalled();
   });
 
   it('이메일/비밀번호가 맞으면 JWT를 발급하고 UserRepositoryDto를 반환한다.', async () => {
@@ -127,8 +124,8 @@ describe('UserService', () => {
     };
 
     repository.findByEmail.mockResolvedValue(stored);
-    auth.validatePassword.mockResolvedValue(true);
-    auth.generateJWT.mockReturnValue('mocked.jwt.token');
+    auth.compare.mockResolvedValue(true);
+    auth.signAccessToken.mockReturnValue('mocked.jwt.token');
 
     const response = await service.login({
       email: 'mj@ex.com',
@@ -136,11 +133,8 @@ describe('UserService', () => {
     } as any);
 
     expect(repository.findByEmail).toHaveBeenCalledWith('mj@ex.com');
-    expect(auth.validatePassword).toHaveBeenCalledWith(
-      'pw',
-      'stored-bcrypt-hash',
-    );
-    expect(auth.generateJWT).toHaveBeenCalledWith(stored.id);
+    expect(auth.compare).toHaveBeenCalledWith('pw', 'stored-bcrypt-hash');
+    expect(auth.signAccessToken).toHaveBeenCalledWith(stored.id);
 
     expect(response.user.email).toBe('mj@ex.com');
     expect(response.user.username).toBe('mj');

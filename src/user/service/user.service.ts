@@ -21,13 +21,13 @@ export class UserService {
       throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
     }
 
-    const passwordHashed = await this.authService.hashPassword(password);
+    const passwordHashed = await this.authService.hash(password);
 
     const user = await this.userRepository.create({
       ...createUserDto,
       password: passwordHashed,
     });
-    const token = this.authService.generateJWT(user.id);
+    const token = this.authService.signAccessToken(user.id);
     const clear = UserMapper.toClearUserDto(user, token);
 
     return UserMapper.toUserResponse(clear);
@@ -45,12 +45,12 @@ export class UserService {
       throw INVALID;
     }
 
-    const ok = await this.authService.validatePassword(password, user.password);
+    const ok = await this.authService.compare(password, user.password);
     if (!ok) {
       throw INVALID;
     }
 
-    const token = this.authService.generateJWT(user.id);
+    const token = this.authService.signAccessToken(user.id);
     const clear = UserMapper.toClearUserDto(user, token);
 
     return UserMapper.toUserResponse(clear);
