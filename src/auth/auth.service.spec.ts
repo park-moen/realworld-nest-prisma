@@ -1,94 +1,133 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { randomUUID } from 'crypto';
 import { AuthService } from './auth.service';
 
 jest.mock('bcrypt', () => ({
-  hash: jest.fn(),
-  compare: jest.fn(),
+  hash: jest.fn(async (value: string) => `hashed-${value}`),
+  compare: jest.fn(
+    async (plain: string, hashed: string) => hashed === `hashed-${plain}`,
+  ),
 }));
-
-import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
   let authService: AuthService;
-  let config: ConfigService;
-  let jwtService: JwtService;
+  // let jwtService: JwtService;
 
   beforeEach(async () => {
+    const jwtMock: Partial<jest.Mocked<JwtService>> = {
+      sign: jest.fn((payload: any) => {
+        const parts = ['sub:' + payload?.sub];
+
+        if (payload?.jti) {
+          parts.push('jti:' + payload?.jti);
+        }
+
+        return 'jwt(' + parts.join(',') + ')';
+      }),
+      verify: jest.fn((token: string) => {
+        if (token.includes('user-err')) {
+          throw new Error('invalid token');
+        }
+        if (token.includes('jti:')) {
+          const sub = token.match(/sub:([^,)]+)/)?.[1] ?? '';
+          const jti = token.match(/jti:([^,)]+)/)?.[1] ?? '';
+          return { sub, jti } as any;
+        }
+        const sub = token.match(/sub:([^,)]+)/)?.[1] ?? '';
+        return { sub } as any;
+      }),
+    };
+
+    const configMock: Partial<ConfigService> = {
+      get: (key: string, def?: any) => {
+        switch (key) {
+          case 'JWT_ACCESS_SECRET':
+            return 'access-secret';
+          case 'JWT_ACCESS_EXPIRES':
+            return '15m';
+          case 'JWT_REFRESH_SECRET':
+            return 'refresh-secret';
+          case 'JWT_REFRESH_EXPIRES':
+            return '7d';
+          case 'BCRYPT_ROUNDS':
+            return 12;
+          default:
+            return def;
+        }
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn().mockImplementation((key: string) => {
-              if (key === 'BCRYPT_ROUNDS') return 12;
-              return undefined;
-            }),
-          },
-        },
-        {
-          provide: JwtService,
-          useValue: {
-            sign: jest.fn().mockReturnValue('mocked.jwt.token'),
-          },
-        },
+        { provide: JwtService, useValue: jwtMock },
+        { provide: ConfigService, useValue: configMock },
       ],
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
-    config = module.get<ConfigService>(ConfigService);
-    jwtService = module.get<JwtService>(JwtService);
+    // jwtService = module.get(JwtService) as jest.Mocked<JwtService>;
+  });
+
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('hashPassword()는 bcrypt.hash를 Config 라운드로 호출한다.', async () => {
-    (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-value');
+  describe('signAccessToken', () => {
+    it('userId를 주면 "검증 가능한 토큰 문자열"을 반환한다.(문자열/비어있지 않음)', () => {
+      const test1 = authService.signAccessToken('u-1');
+      const test2 = authService.signAccessToken('u-2');
 
-    const result = await authService.hashPassword('plain');
-    expect(bcrypt.hash).toHaveBeenCalledWith('plain', 12);
-    expect(result).toBe('hashed-value');
+      expect(typeof test1).toBe('string');
+      expect(test1).not.toHaveLength(0);
+      expect(test2).not.toHaveLength(0);
+      expect(test1).not.toEqual(test2);
+    });
   });
 
-  it('validatePassword()는 bcrypt.compare를 호출하고 결과를 그대로 반환한다.', async () => {
-    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+  describe('signRefreshToken', () => {
+    it('userId와 jti를 주면 jti를 포함한 토큰 문자열을 반환한다.', () => {
+      const token = authService.signRefreshToken('u-1', 'jti-1');
 
-    const ok = await authService.validatePassword('plain', 'stored');
-    expect(bcrypt.compare).toHaveBeenCalledWith('plain', 'stored');
-    expect(ok).toBe(true);
+      expect(typeof token).toBe('string');
+      expect(token).toContain('sub:u-1');
+      expect(token).toContain('jti:jti-1');
+    });
   });
 
-  it('BCRYPT_ROUNDS가 없으면 기본 12를 사용한다.', async () => {
-    (config.get as jest.Mock).mockReturnValueOnce(undefined);
+  describe('verifyRefreshToken', () => {
+    it('올바른 토큰이면 sub/jti/exp를 가진 payload를 반환한다.', () => {
+      const rt = 'jwt(sub:u-1,jti:rt-1)';
+      const payload = authService.verifyRefreshToken(rt);
 
-    const module = await Test.createTestingModule({
-      providers: [
-        AuthService,
-        { provide: ConfigService, useValue: config },
-        {
-          provide: JwtService,
-          useValue: { sign: jest.fn() },
-        },
-      ],
-    }).compile();
+      expect(payload).toEqual({
+        sub: 'u-1',
+        jti: 'rt-1',
+      });
+    });
 
-    const service = module.get(AuthService);
-    (bcrypt.hash as jest.Mock).mockResolvedValue('hashed12');
+    it('변조/잘못된 토큰이면 예외를 던진다.', () => {
+      const bad = 'jwt(sub:user-err,jti:any)';
 
-    await service.hashPassword('plain');
-    expect(bcrypt.hash).toHaveBeenCalledWith('plain', 12);
+      expect(() => authService.verifyRefreshToken(bad)).toThrow();
+    });
   });
 
-  it('generateJWT()는 sub에 id를 담아 jwt.sign을 호출한다.', () => {
-    const id = randomUUID();
-    const token = authService.generateJWT(id);
+  describe('hash / compare', () => {
+    it('hash는 원문을 기반으로 한 "비어있지 않은" 해시 문자열을 반환한다.', async () => {
+      const hash = await authService.hash('secret');
 
-    // jwt.sign()이 정확히 호출되었는지 확인
-    expect(jwtService.sign).toHaveBeenCalledWith({ sub: id });
+      expect(typeof hash).toBe('string');
+      expect(hash).toContain('hashed-');
+      expect(hash.length).toBeGreaterThan('hashed-'.length);
+    });
 
-    // 반환값이 mock된 토큰인지 확인
-    expect(token).toBe('mocked.jwt.token');
+    it('compare는 같은 원문/해시이면 true, 아니면 false를 반환한다.', async () => {
+      const hashed = await authService.hash('secret');
+
+      await expect(authService.compare('secret', hashed)).resolves.toBe(true);
+      await expect(authService.compare('wrong', hashed)).resolves.toBe(false);
+    });
   });
 });
