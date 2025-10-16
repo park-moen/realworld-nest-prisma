@@ -1,9 +1,157 @@
 import { randomUUID } from 'crypto';
 import { Test } from '@nestjs/testing';
-import { HttpException, HttpStatus } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from '@app/auth/auth.service';
 import { UserService } from './user.service';
 import { UserRepository } from '../repository/user.repository';
+
+class MockRefreshTokenRepository {
+  findById = jest.fn();
+  save = jest.fn();
+  revoke = jest.fn();
+}
+
+describe('UserService.refresh', () => {
+  let service: UserService;
+  const auth = {
+    signAccessToken: jest.fn(),
+    signRefreshToken: jest.fn(),
+    verifyRefreshToken: jest.fn(),
+    hash: jest.fn(),
+    compare: jest.fn(),
+  };
+  let repository: MockRefreshTokenRepository;
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      providers: [
+        UserService,
+        {
+          provide: 'RefreshTokenRepository',
+          useClass: MockRefreshTokenRepository,
+        },
+        { provide: AuthService, useValue: auth },
+      ],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+    repository = module.get('RefreshTokenRepository');
+
+    jest.clearAllMocks();
+  });
+
+  const RT = 'rt';
+  const USER_ID = 'u-1';
+  const JTI = 'jti-1';
+
+  it('RT 미제공 -> 400', async () => {
+    await expect(service.refresh(undefined as any)).rejects.toThrow(
+      new BadRequestException('Refresh token required'),
+    );
+  });
+
+  it('서명/검증 실패 -> 401', async () => {
+    (auth.verifyRefreshToken as jest.Mock).mockImplementation(() => {
+      throw new Error('invalid');
+    });
+
+    await expect(service.refresh(RT)).rejects.toThrow(
+      new UnauthorizedException('Invalid refresh token'),
+    );
+  });
+
+  it('DB 미존재 -> 401', async () => {
+    (auth.verifyRefreshToken as jest.Mock).mockReturnValue({
+      sub: USER_ID,
+      jti: JTI,
+    });
+    repository.findById.mockResolvedValue(null);
+
+    await expect(service.refresh(RT)).rejects.toThrow(
+      new UnauthorizedException('Invalid refresh token'),
+    );
+  });
+
+  it('만료 -> 401', async () => {
+    (auth.verifyRefreshToken as jest.Mock).mockReturnValue({
+      sub: USER_ID,
+      jti: JTI,
+    });
+    repository.findById.mockResolvedValue({
+      id: JTI,
+      userId: USER_ID,
+      tokenHash: 'h',
+      expiresAt: new Date(Date.now() - 1000),
+      revokedAt: null,
+    });
+
+    await expect(service.refresh(RT)).rejects.toThrow(
+      new UnauthorizedException('Refresh token expired'),
+    );
+  });
+
+  it('revoked -> 401', async () => {
+    (auth.verifyRefreshToken as jest.Mock).mockReturnValue({
+      sub: USER_ID,
+      jti: JTI,
+    });
+    repository.findById.mockResolvedValue({
+      id: JTI,
+      userId: USER_ID,
+      tokenHash: 'h',
+      expiresAt: new Date(Date.now() - 3600_000),
+      revokedAt: new Date(),
+    });
+
+    await expect(service.refresh(RT)).rejects.toThrow(
+      new UnauthorizedException('Refresh token revoked'),
+    );
+  });
+
+  it('hash 불일치 -> 401', async () => {
+    (auth.verifyRefreshToken as jest.Mock).mockReturnValue({
+      sub: USER_ID,
+      jti: JTI,
+    });
+    repository.findById.mockResolvedValue({
+      id: JTI,
+      userId: USER_ID,
+      tokenHash: 'stored-hash',
+      expiresAt: new Date(Date.now() + 3600_000),
+      revokedAt: null,
+    });
+    (auth.compare as jest.Mock).mockResolvedValue(false);
+
+    await expect(service.refresh).rejects.toThrow(
+      new UnauthorizedException('Invalid refresh token'),
+    );
+  });
+
+  it('성공 -> 새로운 Access Token 발급', async () => {
+    (auth.verifyRefreshToken as jest.Mock).mockReturnValue({
+      sub: USER_ID,
+      jti: JTI,
+    });
+    repository.findById.mockResolvedValue({
+      id: JTI,
+      userId: USER_ID,
+      tokenHash: 'stored',
+      expiresAt: new Date(Date.now() + 3600_000),
+      revokedAt: null,
+    });
+    (auth.compare as jest.Mock).mockResolvedValue(true);
+    (auth.signAccessToken as jest.Mock).mockReturnValue('new.at');
+
+    const response = await service.refresh(RT);
+
+    expect(response).toEqual({ accessToken: 'new.at' });
+  });
+});
 
 describe('UserService', () => {
   let service: UserService;
@@ -12,9 +160,11 @@ describe('UserService', () => {
     create: jest.fn(),
   };
   const auth = {
+    signAccessToken: jest.fn(),
+    signRefreshToken: jest.fn(),
+    verifyRefreshToken: jest.fn(),
     hash: jest.fn(),
     compare: jest.fn(),
-    signAccessToken: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -27,6 +177,7 @@ describe('UserService', () => {
     }).compile();
 
     service = module.get<UserService>(UserService);
+
     jest.clearAllMocks();
   });
 
