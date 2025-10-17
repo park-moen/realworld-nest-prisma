@@ -78,4 +78,44 @@ export class AuthService {
   async compare(plain: string, hashed: string): Promise<boolean> {
     return await bcrypt.compare(plain, hashed);
   }
+
+  computeExpiryDate(): Date {
+    const m = this.refreshExpires.match(/^(\d+)([smhd])$/i);
+    if (!m) {
+      // fallback: 분 단위 문자열이 아닌 경우 7일
+      return new Date(Date.now() + 7 * 24 * 3600 * 1000);
+    }
+    const amount = Number(m[1]);
+    const unit = m[2].toLowerCase();
+
+    const ms =
+      unit === 's'
+        ? amount * 1000
+        : unit === 'm'
+          ? amount * 60 * 1000
+          : unit === 'h'
+            ? amount * 60 * 60 * 1000
+            : /* 'd' */ amount * 24 * 60 * 60 * 1000;
+
+    return new Date(Date.now() + ms);
+  }
+
+  buildRefreshCookieOptions() {
+    const secure = this.config.get<boolean>('REFRESH_COOKIE_SECURE', false);
+    const sameSite = this.config.get<string>(
+      'REFRESH_COOKIE_SAMESITE',
+      'lax',
+    ) as 'lax' | 'strict' | 'none';
+
+    return {
+      httpOnly: true,
+      secure,
+      sameSite,
+      path: '/',
+    } as const;
+  }
+
+  getRefreshCookieName() {
+    return this.cookieName;
+  }
 }
