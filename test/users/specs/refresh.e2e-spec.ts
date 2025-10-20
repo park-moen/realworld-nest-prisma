@@ -84,7 +84,6 @@ describe('Feature: Refresh Token 갱신 (Refresh E2E)', () => {
         expect(response.body.user.token.length).toBeGreaterThan(0);
       });
 
-      // ! 실제 구현에서 RT를 재발급하지 않는 문제를 fix 브랜치에서 해결해야 한다.
       it('When Refresh Token으로 갱신하면, Then 새로운 Refresh Token이 Cookie로 반환된다.', async () => {
         // When
         const response = await request(app.getHttpServer())
@@ -128,7 +127,6 @@ describe('Feature: Refresh Token 갱신 (Refresh E2E)', () => {
         );
       });
 
-      // ! 실제 구현에서 RT를 재발급하지 않는 문제를 fix 브랜치에서 해결해야 한다.
       it('When Refresh Token이 갱신하면, Then 새로운 Refresh Token 발급으로 DB의 레코드 개수가 1 증가한다.', async () => {
         // Given
         const beforeCount = await countUserRefreshTokens(prisma, userId);
