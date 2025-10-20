@@ -77,7 +77,7 @@ describe('Feature: 로그인 (Login E2E)', () => {
         expect(response.body.user).toHaveProperty('token');
       });
 
-      it('When 올바른 정보로 로그인하면, Then RT가 cookie에 저장된다.', async () => {
+      it('When 올바른 정보로 로그인하면, Then RT cookie에 보안 옵션이 설정된다,.', async () => {
         const response = await request(app.getHttpServer())
           .post('/users/login')
           .send({
@@ -86,8 +86,16 @@ describe('Feature: 로그인 (Login E2E)', () => {
               password: userCredentials.password,
             },
           });
-        const refreshToken = response.headers['set-cookie'];
-        expect(refreshToken).toBeDefined();
+        const setCookieHeader = response.headers['set-cookie'];
+        expect(setCookieHeader).toBeDefined();
+
+        const cookieString = Array.isArray(setCookieHeader)
+          ? setCookieHeader[0]
+          : setCookieHeader;
+
+        expect(cookieString).toContain('HttpOnly');
+        expect(cookieString.toLowerCase()).toContain('samesite=lax');
+        expect(cookieString).toContain('Path=/');
       });
 
       it('When 올바른 정보로 로그인하면, Then RT가 DB에 저장된다.', async () => {
