@@ -8,6 +8,7 @@ export const createMockAuthService = (): MockAuthService => ({
   signAccessToken: jest.fn(),
   signRefreshToken: jest.fn(),
   verifyRefreshToken: jest.fn(),
+  issueRefreshToken: jest.fn(),
   hash: jest.fn(),
   compare: jest.fn(),
   computeExpiryDate: jest.fn(),

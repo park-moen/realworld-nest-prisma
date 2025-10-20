@@ -35,7 +35,7 @@ describe('UserService', () => {
     describe('Given 서명이 유효하지 않은 RT인 경우', () => {
       beforeEach(() => {
         context.authService.verifyRefreshToken.mockImplementation(() => {
-          throw new Error('Invalid signature');
+          throw new Error('Invalid refresh token');
         });
       });
 
@@ -157,7 +157,7 @@ describe('UserService', () => {
     });
 
     describe('Given 유효한 RT인 경우 ', () => {
-      const newAccessToken = 'new.access.token';
+      const validToken = 'valid-refresh-token';
 
       beforeEach(() => {
         context.authService.verifyRefreshToken.mockReturnValue({
@@ -168,28 +168,32 @@ describe('UserService', () => {
           mockValidRefreshToken(userId, jti) as any,
         );
         context.authService.compare.mockResolvedValue(true);
-        context.authService.signAccessToken.mockReturnValue(newAccessToken);
+        context.authService.issueRefreshToken.mockResolvedValue({
+          accessToken: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+        });
       });
 
       it('When 토큰 갱신을 시도하면, Then 새로운 AT를 발급한다.', async () => {
         // When
-        const result = await context.service.refresh(validRefreshToken);
+        const result = await context.service.refresh(validToken);
 
         // Then
         expect(context.authService.verifyRefreshToken).toHaveBeenCalledWith(
-          validRefreshToken,
+          validToken,
         );
         expect(context.refreshTokenRepository.findById).toHaveBeenCalledWith(
           jti,
         );
         expect(context.authService.compare).toHaveBeenCalledWith(
-          validRefreshToken,
+          validToken,
           'stored-hash',
         );
-        expect(context.authService.signAccessToken).toHaveBeenCalledWith(
+        expect(result.accessToken).toBe('new-access-token');
+        expect(result.refreshToken).toBe('new-refresh-token');
+        expect(context.authService.issueRefreshToken).toHaveBeenCalledWith(
           userId,
         );
-        expect(result.accessToken).toBe(newAccessToken);
       });
     });
   });
