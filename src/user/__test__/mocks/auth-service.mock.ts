@@ -1,4 +1,4 @@
-import { AuthService } from '@app/auth/auth.service';
+import { AuthService } from '@app/auth/service/auth.service';
 
 export type MockAuthService = {
   [K in keyof AuthService]: jest.MockedFunction<AuthService[K]>;

@@ -11,7 +11,7 @@ import { UserService } from '../service/user.service';
 import { CreateUserDto } from '../dto/request/create-user.dto';
 import { UserResponseDto } from '../dto/response/user.response.dto';
 import { LoginUserDto } from '../dto/request/login-user.dto';
-import { AuthService } from '@app/auth/auth.service';
+import { AuthService } from '@app/auth/service/auth.service';
 import { Request, Response } from 'express';
 
 @Controller('users')

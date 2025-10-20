@@ -1,4 +1,4 @@
-import { AuthService } from '@app/auth/auth.service';
+import { AuthService } from '@app/auth/service/auth.service';
 import {
   BadRequestException,
   HttpException,

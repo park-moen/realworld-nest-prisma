@@ -1,4 +1,4 @@
-import { AuthService } from '@app/auth/auth.service';
+import { AuthService } from '@app/auth/service/auth.service';
 import { RefreshTokenRepository } from '@app/auth/repository/refresh-token.repository';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';

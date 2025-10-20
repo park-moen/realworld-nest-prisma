@@ -13,7 +13,7 @@ import {
 } from '../mocks/refresh-token-repository.mock';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserRepository } from '@app/user/repository/user.repository';
-import { AuthService } from '@app/auth/auth.service';
+import { AuthService } from '@app/auth/service/auth.service';
 import { RefreshTokenRepository } from '@app/auth/repository/refresh-token.repository';
 
 export interface UserServiceTestContext {

@@ -8,7 +8,7 @@ import {
 } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
-import { RefreshTokenRepository } from './repository/refresh-token.repository';
+import { RefreshTokenRepository } from '../repository/refresh-token.repository';
 
 type JwtPayload = { sub: string; jti?: string };
 
