@@ -12,7 +12,6 @@ import { UserMapper } from '../user.mapper';
 import { UserRepository } from '../repository/user.repository';
 import { LoginUserDto } from '../dto/request/login-user.dto';
 import { RefreshTokenRepository } from '@app/auth/repository/refresh-token.repository';
-import { randomUUID } from 'crypto';
 
 @Injectable()
 export class UserService {
@@ -61,17 +60,8 @@ export class UserService {
       throw INVALID;
     }
 
-    const jti = randomUUID();
-    const accessToken = this.authService.signAccessToken(user.id);
-    const refreshToken = this.authService.signRefreshToken(user.id, jti);
-    const tokenHash = await this.authService.hash(refreshToken);
-
-    await this.refreshTokenRepository.save({
-      id: jti,
-      tokenHash,
-      user: { connect: { id: user.id } },
-      expiresAt: this.authService.computeExpiryDate(),
-    });
+    const { accessToken, refreshToken } =
+      await this.authService.issueRefreshToken(user.id);
 
     const clear = UserMapper.toClearUserDto(user, accessToken);
 
@@ -81,20 +71,16 @@ export class UserService {
     };
   }
 
-  async refresh(refreshToken: string) {
-    if (!refreshToken) {
+  async refresh(oldToken: string) {
+    if (!oldToken) {
       throw new BadRequestException('Refresh token required');
     }
 
-    let payload: { sub: string; jti?: string };
+    //! 관심사 분리 원칙으로 authService의 verifyRefreshToken 메서드로 리팩토링 필요 (시작점)
+    const { sub: userId, jti }: { sub: string; jti?: string } =
+      this.authService.verifyRefreshToken(oldToken);
 
-    try {
-      payload = this.authService.verifyRefreshToken(refreshToken);
-    } catch {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
-
-    const record = await this.refreshTokenRepository.findById(payload.jti);
+    const record = await this.refreshTokenRepository.findById(jti);
 
     if (!record) {
       throw new UnauthorizedException('Invalid refresh token');
@@ -106,12 +92,14 @@ export class UserService {
       throw new UnauthorizedException('Refresh token expired');
     }
 
-    const ok = await this.authService.compare(refreshToken, record.tokenHash);
+    const ok = await this.authService.compare(oldToken, record.tokenHash);
     if (!ok) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+    //! 관심사 분리 원칙으로 authService의 verifyRefreshToken 메서드로 리팩토링 필요 (끝점)
 
-    const accessToken = this.authService.signAccessToken(record.userId);
+    const { accessToken, refreshToken } =
+      await this.authService.issueRefreshToken(userId);
 
     return { accessToken, refreshToken };
   }

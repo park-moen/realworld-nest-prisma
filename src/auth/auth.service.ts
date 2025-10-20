@@ -1,7 +1,14 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtVerifyOptions } from '@nestjs/jwt';
+import {
+  TokenExpiredError,
+  JsonWebTokenError,
+  NotBeforeError,
+} from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
+import { RefreshTokenRepository } from './repository/refresh-token.repository';
 
 type JwtPayload = { sub: string; jti?: string };
 
@@ -20,6 +27,7 @@ export class AuthService {
   constructor(
     private readonly config: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly refreshTokenRepository: RefreshTokenRepository,
   ) {
     this.round = Number(config.get('BCRYPT_ROUNDS') ?? 12);
 
@@ -56,19 +64,52 @@ export class AuthService {
     });
   }
 
+  async issueRefreshToken(userId: string) {
+    const jti = randomUUID();
+    const accessToken = this.signAccessToken(userId);
+    const refreshToken = this.signRefreshToken(userId, jti);
+    const tokenHash = await this.hash(refreshToken);
+
+    await this.refreshTokenRepository.save({
+      id: jti,
+      tokenHash,
+      user: { connect: { id: userId } },
+      expiresAt: this.computeExpiryDate(),
+    });
+
+    return { accessToken, refreshToken };
+  }
+
   verifyRefreshToken(refresh: string) {
+    let verifyToken: JwtPayload;
     try {
       const options: JwtVerifyOptions = { secret: this.refreshSecret };
-      const verifyToken = this.jwtService.verify<JwtPayload>(refresh, options);
+      verifyToken = this.jwtService.verify<JwtPayload>(refresh, options);
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
 
-      if (!verifyToken?.sub || !verifyToken?.jti) {
+      if (error instanceof TokenExpiredError) {
+        throw new UnauthorizedException('Refresh token expired');
+      }
+
+      if (error instanceof NotBeforeError) {
+        throw new UnauthorizedException('Token not yet valid');
+      }
+
+      if (error instanceof JsonWebTokenError) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      return verifyToken;
-    } catch {
+      throw new UnauthorizedException('Token verification failed');
+    }
+
+    if (!verifyToken?.sub || !verifyToken?.jti) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+
+    return verifyToken;
   }
 
   async hash(value: string): Promise<string> {
@@ -101,6 +142,7 @@ export class AuthService {
   }
 
   buildRefreshCookieOptions() {
+    // ! this로 configService 환경변수 추출해야함
     const secure = this.config.get<boolean>('REFRESH_COOKIE_SECURE', false);
     const sameSite = this.config.get<string>(
       'REFRESH_COOKIE_SAMESITE',
