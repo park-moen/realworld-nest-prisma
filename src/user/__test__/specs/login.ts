@@ -132,35 +132,6 @@ const loginTest = () => {
           expect(result.result.user.token).toBe(accessToken);
           expect(result.refreshToken).toBe(refreshToken);
         });
-
-        // ! AuthService의 Unit Test로 이동 예정
-        // it('When 로그인을 시도하면, Then RT를 해싱하여 DB에 저장한다.', async () => {
-        //   // When
-        //   await context.service.login(loginDto as any);
-
-        //   // Then
-        //   expect(context.authService.hash).toHaveBeenCalledWith(refreshToken);
-        //   expect(context.refreshTokenRepository.save).toHaveBeenCalled();
-        //   expect(context.refreshTokenRepository.save).toHaveBeenCalledWith(
-        //     expect.objectContaining({
-        //       tokenHash: hashedRefreshToken,
-        //       user: { connect: { id: storedUser.id } },
-        //     }),
-        //   );
-        // });
-
-        // ! AuthService의 Unit Test로 이동 예정
-        // it('When 로그인을 시도하면, Then RT에는 고유한 JTI가 포함된다.', async () => {
-        //   // When
-        //   await context.service.login(loginDto as any);
-
-        //   // Then
-        //   expect(context.refreshTokenRepository.save).toHaveBeenCalledWith(
-        //     expect.objectContaining({
-        //       id: expect.any(String),
-        //     }),
-        //   );
-        // });
       });
 
       describe('Given 계정이 잠긴 경우', () => {
