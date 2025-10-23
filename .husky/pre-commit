@@ -1,5 +1,6 @@
 echo "🧪 Running tests before commit..."
 
+npx lint-staged
 npm run test:pre-commit
 
 if [ $? -ne 0 ]; then
