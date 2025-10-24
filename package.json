@@ -21,7 +21,7 @@
     "seed": "npx prisma db seed",
     "db:studio": "npx prisma studio",
     "prepare": "husky",
-    "test:pre-commit": "npm run test"
+    "test:pre-push": "npm run test"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
