@@ -8,6 +8,7 @@ on:
 
 jobs:
   test:
+    name: test (pull_request)
     runs-on: ubuntu-latest
 
     steps:
