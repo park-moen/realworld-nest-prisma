@@ -6,6 +6,7 @@ import {
   Post,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from '../service/user.service';
 import { CreateUserDto } from '../dto/request/create-user.dto';
@@ -13,6 +14,8 @@ import { UserResponseDto } from '../dto/response/user.response.dto';
 import { LoginUserDto } from '../dto/request/login-user.dto';
 import { AuthService } from '@app/auth/service/auth.service';
 import { Request, Response } from 'express';
+import { Feature } from '@app/common/decorators/feature.decorator';
+import { FeatureFlagGuard } from '@app/common/guards/feature-flag.guard';
 
 @Controller('users')
 export class UserController {
@@ -22,6 +25,8 @@ export class UserController {
   ) {}
 
   @Post()
+  @UseGuards(FeatureFlagGuard)
+  @Feature('USER_SIGNUP')
   async createUser(
     @Body('user') createUserDto: CreateUserDto,
   ): Promise<UserResponseDto> {
@@ -30,21 +35,23 @@ export class UserController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(FeatureFlagGuard)
+  @Feature('USER_LOGIN')
   async login(
     @Body('user') loginUserDto: LoginUserDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<UserResponseDto> {
+  ): Promise<any> {
     const { result, refreshToken } = await this.userService.login(loginUserDto);
     const cookieName = this.authService.getRefreshCookieName();
     const cookieOptions = this.authService.buildRefreshCookieOptions();
-
     res.cookie(cookieName, refreshToken, cookieOptions);
-
     return result;
   }
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(FeatureFlagGuard)
+  @Feature('REFRESH_TOKEN')
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,

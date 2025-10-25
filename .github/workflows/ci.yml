@@ -41,6 +41,12 @@ jobs:
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
 
+          # ! .env.test로 이동 예정
+          # Feature Flag 환경변수
+          FF_USER_SIGNUP: true
+          FF_USER_LOGIN: true
+          FF_REFRESH_TOKEN: true
+
       - name: Check test coverage
         run: npm run test:cov
 
