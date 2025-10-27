@@ -29,19 +29,19 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly refreshTokenRepository: RefreshTokenRepository,
   ) {
-    this.round = Number(config.get('BCRYPT_ROUNDS') ?? 12);
+    this.round = Number(config.get('hasher.round') ?? 12);
 
-    this.accessSecret = this.config.get<string>('JWT_ACCESS_SECRET', 'access');
-    this.accessExpires = this.config.get<string>('JWT_ACCESS_EXPIRES', '15m');
+    this.accessSecret = this.config.get<string>('jwt.accessSecret', 'access');
+    this.accessExpires = this.config.get<string>('jwt.accessExpiresIn', '15m');
 
     this.refreshSecret = this.config.get<string>(
-      'JWT_REFRESH_SECRET',
+      'jwt.refreshSecret',
       'refresh',
     );
-    this.refreshExpires = this.config.get<string>('JWT_REFRESH_EXPIRES', '7d');
+    this.refreshExpires = this.config.get<string>('jwt.refreshExpiresIn', '7d');
 
     this.cookieName = this.config.get<string>(
-      'REFRESH_COOKIE_NAME',
+      'cookie.refreshCookieName',
       'refresh_token',
     );
   }
@@ -143,9 +143,12 @@ export class AuthService {
 
   buildRefreshCookieOptions() {
     // ! this로 configService 환경변수 추출해야함
-    const secure = this.config.get<boolean>('REFRESH_COOKIE_SECURE', false);
+    const secure = this.config.get<boolean>(
+      'cookie.refreshCookieSecret',
+      false,
+    );
     const sameSite = this.config.get<string>(
-      'REFRESH_COOKIE_SAMESITE',
+      'cookie.refreshCookieSameSite',
       'lax',
     ) as 'lax' | 'strict' | 'none';
 

@@ -11,6 +11,7 @@ import { UserRepository } from './repository/user.repository';
 @Module({
   imports: [
     PrismaModule,
+    //! 불필요한 의존성 주입, 새로운 브랜치 생성해서 제거
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
