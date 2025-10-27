@@ -30,9 +30,12 @@ WORKDIR /app
 # Production에도 패키지 업데이트
 RUN apk update && apk upgrade --no-cache
 
-# 프로덕션 의존성만 설치
+# package.json 복사
 COPY package*.json ./
-RUN npm ci --only=production
+
+# prepare 스크립트 제거 후 프로덕션 의존성 설치
+RUN npm pkg delete scripts.prepare && \
+    npm ci --only=production
 
 # Prisma schema 복사 (마이그레이션에 필요)
 COPY --from=builder /app/prisma ./prisma
@@ -48,4 +51,4 @@ COPY --from=builder /app/dist ./dist
 ENV NODE_ENV=staging
 
 # Prisma 마이그레이션 실행 후 앱 시작
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
