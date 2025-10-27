@@ -26,7 +26,7 @@ export const setupE2ETest = async (): Promise<E2ETestContext> => {
   const app = moduleRef.createNestApplication();
   const configService = app.get(ConfigService);
   const cookieSecret = configService.get<string>(
-    'REFRESH_COOKIE_SECRET',
+    'cookie.refreshCookieSecret',
     'default-secret',
   );
 

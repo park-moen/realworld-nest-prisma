@@ -15,9 +15,10 @@ export class PrismaService
   constructor(private readonly configService: ConfigService) {
     super({
       datasources: {
-        db: { url: configService.get<string>('DATABASE_URL') },
+        db: { url: configService.get<string>('database.url') },
       },
-      log: ['info', 'query', 'warn', 'error'],
+      // ! 새로운 브랜치를 만들어서 환경별로 lgo 옵션 수정
+      log: ['warn', 'error'],
     });
   }
 
