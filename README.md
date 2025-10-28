@@ -144,3 +144,108 @@ async createArticle() {
 2. **미완성 기능은 Feature Flag로 숨기기**
 3. **하루 최소 1-2회 main에 병합**
 4. **Push 전 항상 테스트 실행**
+
+## 🐳 로컬 Docker 빌드 테스트
+
+배포 전 Docker 이미지가 정상적으로 빌드되고 실행되는지 검증하는 절차입니다.
+
+### 📌 왜 필요한가요?
+
+- 운영 환경(Railway, AWS 등)과 동일한 조건에서 사전 검증
+- CI/CD 실패 방지 및 디버깅 시간 단축
+- Dockerfile, 환경변수, 빌드 산출물 문제 조기 발견
+
+### 🚀 테스트 순서
+
+#### 1. Docker 이미지 빌드
+
+```bash
+docker build -t nestjs-app .
+```
+
+**체크포인트:**
+
+- ✅ 빌드가 에러 없이 완료되는가?
+- ✅ `dist/src/main.js` 파일이 생성되는가?
+- ✅ Prisma Client가 정상 생성되는가?
+
+#### 2. 컨테이너 실행
+
+```bash
+docker run -p 3000:3000 \
+-e DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/real_world_dev?schema=public" \
+-e JWT_ACCESS_SECRET="test-secret-key" \
+-e JWT_REFRESH_SECRET="test-refresh-key" \
+-e BCRYPT_ROUNDS="10" \
+nestjs-app
+```
+
+#### 3. API 동작 확인
+
+**Postman/curl 테스트:**
+
+Health check (루트는 404 정상, API 엔드포인트 확인)
+
+```bash
+curl http://localhost:3000/api/users
+```
+
+또는 Postman으로 실행
+
+**체크포인트:**
+
+- ✅ 서버가 정상 시작되는가? (로그: "Listening on port 3000")
+- ✅ DB 연결이 정상인가? (Prisma 연결 로그 확인)
+- ✅ API 엔드포인트가 응답하는가?
+
+### 📝 배포 전 체크리스트
+
+- [ ] `docker build` 성공
+- [ ] 컨테이너 실행 후 "Listening on port 3000" 로그 확인
+- [ ] DB 연결 정상 (Prisma 로그 확인)
+- [ ] 최소 1개 API 엔드포인트 정상 응답
+- [ ] 환경변수 누락 없음
+- [ ] CORS 설정 확인 (필요시)
+
+### 🎯 배포 환경별 주의사항
+
+**Railway 배포 시:**
+
+- DATABASE_URL은 Railway Variables에서 자동 주입 or 직접 주입
+- PORT는 Railway가 자동 할당 (코드에서 `process.env.PORT` 사용 필수)
+- `host.docker.internal` 대신 실제 Railway DB 연결 문자열 사용
+
+### ✅ 현재 프로세스 개선 제안
+
+#### 1. 자동화 스크립트 추가 (선택)
+
+```bash
+# 컨테이너 내부 파일 구조 확인
+docker run -it --entrypoint /bin/sh nestjs-app
+ls -la /app/dist/src
+```
+
+#### 2. 컨테이너 내부 확인 추가 (선택)
+
+```bash
+# scripts/docker-test.sh
+#!/bin/bash
+echo "🔨 Building Docker image..."
+docker build -t nestjs-app .
+
+echo "🚀 Starting container..."
+docker run -d -p 3000:3000 \
+  -e DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/real_world_dev?schema=public" \
+  --name nestjs-test \
+  nestjs-app
+
+echo "⏳ Waiting for server..."
+sleep 5
+
+echo "🧪 Testing API..."
+curl http://localhost:3000/api/users
+
+echo "🧹 Cleanup..."
+docker stop nestjs-test
+docker rm nestjs-test
+```
