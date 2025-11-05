@@ -76,6 +76,9 @@ export class UserService {
     accessToken: string | undefined,
   ): Promise<any> {
     const user = await this.userRepository.findUserById(userId);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
 
     const clear = UserMapper.toClearUserDto(user, accessToken);
 
