@@ -1,10 +1,10 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
-  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -13,9 +13,13 @@ import { CreateUserDto } from '../dto/request/create-user.dto';
 import { UserResponseDto } from '../dto/response/user.response.dto';
 import { LoginUserDto } from '../dto/request/login-user.dto';
 import { AuthService } from '@app/auth/service/auth.service';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Feature } from '@app/common/decorators/feature.decorator';
 import { FeatureFlagGuard } from '@app/common/guards/feature-flag.guard';
+import { AccessTokenGuard } from '@app/common/guards/access-token.guard';
+import { CurrentUser } from '@app/common/decorators/current-user-decorator';
+import { AuthUser } from '@app/common/types/auth-user';
+import { RefreshTokenGuard } from '@app/common/guards/refresh-token.guard';
 
 @Controller('users')
 export class UserController {
@@ -48,20 +52,24 @@ export class UserController {
     return result;
   }
 
+  @UseGuards(AccessTokenGuard)
+  @Get('user')
+  async getUserCurrent(@CurrentUser() user: AuthUser): Promise<any> {
+    return await this.userService.getUserCurrent(user.userId, user.token);
+  }
+
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(FeatureFlagGuard)
+  @UseGuards(FeatureFlagGuard, RefreshTokenGuard)
   @Feature('REFRESH_TOKEN')
   async refresh(
-    @Req() req: Request,
+    @CurrentUser() user: AuthUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ user: { token: string } }> {
+    const { accessToken, refreshToken } = await this.userService.refresh(
+      user.refreshToken,
+    );
     const cookieName = this.authService.getRefreshCookieName();
-    const token = (req.cookies && req.cookies[cookieName]) as
-      | string
-      | undefined;
-
-    const { accessToken, refreshToken } = await this.userService.refresh(token);
     const cookieOptions = this.authService.buildRefreshCookieOptions();
 
     res.cookie(cookieName, refreshToken, cookieOptions);

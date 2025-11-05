@@ -9,8 +9,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { RefreshTokenRepository } from '../repository/refresh-token.repository';
-
-type JwtPayload = { sub: string; jti?: string };
+import { JwtPayload } from '@app/common/types/auth-user';
 
 @Injectable()
 export class AuthService {
@@ -78,6 +77,19 @@ export class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  verifyAccessToken(token: string | undefined) {
+    const secret = this.config.get<string>('jwt.accessSecret', 'access');
+    const payload = this.jwtService.verify(token, { secret }) as {
+      sub?: string;
+    };
+
+    if (!payload?.sub) {
+      throw new UnauthorizedException('Invalid access token payload');
+    }
+
+    return payload;
   }
 
   verifyRefreshToken(refresh: string) {
