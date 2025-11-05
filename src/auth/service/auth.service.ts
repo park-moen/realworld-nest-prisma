@@ -80,6 +80,19 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  verifyAccessToken(token: string | undefined) {
+    const secret = this.config.get<string>('jwt.accessSecret', 'access');
+    const payload = this.jwtService.verify(token, { secret }) as {
+      sub?: string;
+    };
+
+    if (!payload?.sub) {
+      throw new UnauthorizedException('Invalid access token payload');
+    }
+
+    return payload;
+  }
+
   verifyRefreshToken(refresh: string) {
     let verifyToken: JwtPayload;
     try {
