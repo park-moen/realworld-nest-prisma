@@ -71,6 +71,13 @@ export class UserService {
     };
   }
 
+  async getUserCurrent(token: string | undefined): Promise<any> {
+    const user = await this.userRepository.findUserById(token);
+    const clear = UserMapper.toClearUserDto(user, token);
+
+    return UserMapper.toUserResponse(clear);
+  }
+
   async refresh(oldToken: string) {
     if (!oldToken) {
       throw new BadRequestException('Refresh token required');

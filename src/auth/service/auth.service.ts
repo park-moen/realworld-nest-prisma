@@ -9,8 +9,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { RefreshTokenRepository } from '../repository/refresh-token.repository';
-
-type JwtPayload = { sub: string; jti?: string };
+import { JwtPayload } from '@app/common/types/auth-user';
 
 @Injectable()
 export class AuthService {

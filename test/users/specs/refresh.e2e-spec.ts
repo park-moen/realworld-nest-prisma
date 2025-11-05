@@ -143,14 +143,14 @@ describe('Feature: Refresh Token 갱신 (Refresh E2E)', () => {
     });
 
     describe('Given Refresh Token이 제공되지 않은 경우', () => {
-      it('When 쿠키 없이 갱신 요청을 하면, Then 400 에러를 반환한다', async () => {
+      it('When 쿠키 없이 갱신 요청을 하면, Then 401 에러를 반환한다', async () => {
         // When
         const response = await request(app.getHttpServer()).post(
           '/users/refresh',
         );
 
         // Then
-        expect(response.status).toBe(400);
+        expect(response.status).toBe(401);
       });
     });
 

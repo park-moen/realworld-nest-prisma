@@ -3,3 +3,5 @@ export type AuthUser = {
   jti?: string;
   refreshToken?: string;
 };
+
+export type JwtPayload = { sub: string; jti?: string };

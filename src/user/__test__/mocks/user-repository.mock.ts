@@ -6,6 +6,7 @@ export type MockUserRepository = {
 
 export const createMockUserRepository = (): MockUserRepository => ({
   findByEmail: jest.fn(),
+  findUserById: jest.fn(),
   create: jest.fn(),
 });
 
