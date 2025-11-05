@@ -11,13 +11,14 @@ import {
   NotBeforeError,
   TokenExpiredError,
 } from '@nestjs/jwt';
+import { Request } from 'express';
 
 @Injectable()
 export class AccessTokenGuard implements CanActivate {
   constructor(private readonly authService: AuthService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest();
+    const req = context.switchToHttp().getRequest<Request>();
 
     const authHeader = req.headers.authorization;
     if (
@@ -34,7 +35,7 @@ export class AccessTokenGuard implements CanActivate {
 
     try {
       const payload = this.authService.verifyAccessToken(token);
-      req.user = { userId: payload.sub };
+      req.user = { userId: payload.sub, token };
 
       return true;
     } catch (error) {

@@ -71,9 +71,13 @@ export class UserService {
     };
   }
 
-  async getUserCurrent(token: string | undefined): Promise<any> {
-    const user = await this.userRepository.findUserById(token);
-    const clear = UserMapper.toClearUserDto(user, token);
+  async getUserCurrent(
+    userId: string | undefined,
+    accessToken: string | undefined,
+  ): Promise<any> {
+    const user = await this.userRepository.findUserById(userId);
+
+    const clear = UserMapper.toClearUserDto(user, accessToken);
 
     return UserMapper.toUserResponse(clear);
   }

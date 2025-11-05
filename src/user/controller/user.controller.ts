@@ -55,7 +55,7 @@ export class UserController {
   @UseGuards(AccessTokenGuard)
   @Get('user')
   async getUserCurrent(@CurrentUser() user: AuthUser): Promise<any> {
-    return await this.userService.getUserCurrent(user.userId);
+    return await this.userService.getUserCurrent(user.userId, user.token);
   }
 
   @Post('refresh')
