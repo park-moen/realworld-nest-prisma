@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Put,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -20,6 +21,7 @@ import { AccessTokenGuard } from '@app/common/guards/access-token.guard';
 import { CurrentUser } from '@app/common/decorators/current-user-decorator';
 import { AuthUser } from '@app/common/types/auth-user';
 import { RefreshTokenGuard } from '@app/common/guards/refresh-token.guard';
+import { UpdateUserDto } from '../dto/request/update-user.dto';
 
 @Controller('users')
 export class UserController {
@@ -35,6 +37,15 @@ export class UserController {
     @Body('user') createUserDto: CreateUserDto,
   ): Promise<UserResponseDto> {
     return await this.userService.createUser(createUserDto);
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Put('user')
+  async updateUser(
+    @CurrentUser() user: AuthUser,
+    @Body('user') updateUserDto: UpdateUserDto,
+  ) {
+    return this.userService.updateUser(updateUserDto, user.token);
   }
 
   @Post('login')

@@ -4,11 +4,12 @@ export type MockUserRepository = {
   [K in keyof UserRepository]: jest.MockedFunction<UserRepository[K]>;
 };
 
-export const createMockUserRepository = (): MockUserRepository => ({
-  findByEmail: jest.fn(),
-  findUserById: jest.fn(),
-  create: jest.fn(),
-});
+export const createMockUserRepository = (): MockUserRepository =>
+  ({
+    findByEmail: jest.fn(),
+    findUserById: jest.fn(),
+    create: jest.fn(),
+  }) as any;
 
 export const mockUserRepositoryWithExistingUser = (
   email: string,
