@@ -6,7 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthModule } from '@app/auth/auth.module';
 import { UserRepository } from './repository/user.repository';
-// import { RefreshTokenRepository } from '@app/auth/repository/refresh-token.repository';
+import { IsImageStorageUrlConstraint } from './validators/is-image-storage-url.constraint';
 
 @Module({
   imports: [
@@ -22,6 +22,7 @@ import { UserRepository } from './repository/user.repository';
     AuthModule,
   ],
   controllers: [UserController],
-  providers: [UserService, UserRepository],
+  providers: [UserService, UserRepository, IsImageStorageUrlConstraint],
+  exports: [IsImageStorageUrlConstraint],
 })
 export class UserModule {}

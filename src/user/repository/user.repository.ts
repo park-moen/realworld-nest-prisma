@@ -10,6 +10,10 @@ export class UserRepository {
     return this.prisma.user.create({ data: createUserDto });
   }
 
+  update(id: string, updateUserDto: Prisma.UserUpdateInput) {
+    return this.prisma.user.update({ where: { id }, data: updateUserDto });
+  }
+
   findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
   }
