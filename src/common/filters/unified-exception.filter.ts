@@ -62,7 +62,7 @@ export class UnifiedExceptionFilter implements ExceptionFilter {
       const response = exception.getResponse() as any;
 
       return {
-        code: response.code || this.getHttpExceptionCode(402),
+        code: response.code || 'VALIDATION.INVALID_INPUT',
         message: response.message || 'Validation failed',
         statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
         details: response.details || response.message,
