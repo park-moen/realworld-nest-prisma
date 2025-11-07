@@ -11,9 +11,9 @@ import { randomUUID } from 'crypto';
 import { RefreshTokenRepository } from '../repository/refresh-token.repository';
 import { JwtPayload } from '@app/common/types/auth-user';
 import {
-  TokenInvalidError,
   TokenExpiredError,
-} from '@app/common/errors/domain.error';
+  TokenInvalidError,
+} from '@app/common/errors/auth-domain.error';
 
 @Injectable()
 export class AuthService {

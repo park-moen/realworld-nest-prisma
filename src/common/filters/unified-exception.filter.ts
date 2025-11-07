@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { DomainError } from '../errors/domain.error';
+import { DomainError } from '../errors/base-domain.error';
 import { randomUUID } from 'crypto';
 
 @Catch()
