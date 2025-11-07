@@ -1,5 +1,5 @@
-import { IsImageStorageUrl } from '@app/user/validators/is-image-storage-url';
-import { AtLeastOneField, NotEqual } from '@app/user/validators/update.rules';
+import { IsImageStorageUrl } from '@app/common/validators/is-image-storage-url';
+import { AtLeastOneField, NotEqual } from '@app/common/validators/update.rules';
 import {
   IsDefined,
   IsEmail,

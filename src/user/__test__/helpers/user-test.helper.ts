@@ -1,4 +1,4 @@
-import { UserService } from '@app/user/service/user.service';
+import { UserService } from '@app/user/user.service';
 import {
   createMockUserRepository,
   MockUserRepository,
@@ -12,9 +12,9 @@ import {
   MockRefreshTokenRepository,
 } from '../mocks/refresh-token-repository.mock';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserRepository } from '@app/user/repository/user.repository';
-import { AuthService } from '@app/auth/service/auth.service';
-import { RefreshTokenRepository } from '@app/auth/repository/refresh-token.repository';
+import { UserRepository } from '@app/user/user.repository';
+import { AuthService } from '@app/auth/auth.service';
+import { RefreshTokenRepository } from '@app/auth/refresh-token.repository';
 
 export interface UserServiceTestContext {
   service: UserService;

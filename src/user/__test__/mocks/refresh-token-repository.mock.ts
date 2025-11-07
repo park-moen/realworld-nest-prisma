@@ -1,4 +1,4 @@
-import { RefreshTokenRepository } from '@app/auth/repository/refresh-token.repository';
+import { RefreshTokenRepository } from '@app/auth/refresh-token.repository';
 
 export type MockRefreshTokenRepository = {
   [K in keyof RefreshTokenRepository]: jest.MockedFunction<

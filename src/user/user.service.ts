@@ -1,11 +1,11 @@
-import { AuthService } from '@app/auth/service/auth.service';
+import { AuthService } from '@app/auth/auth.service';
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from '../dto/request/create-user.dto';
-import { UserResponseDto } from '../dto/response/user.response.dto';
-import { UserMapper } from '../user.mapper';
-import { UserRepository } from '../repository/user.repository';
-import { LoginUserDto } from '../dto/request/login-user.dto';
-import { UpdateUserDto } from '../dto/request/update-user.dto';
+import { CreateUserDto } from './dto/request/create-user.dto';
+import { UserResponseDto } from './dto/response/user.response.dto';
+import { UserMapper } from './user.mapper';
+import { UserRepository } from './user.repository';
+import { LoginUserDto } from './dto/request/login-user.dto';
+import { UpdateUserDto } from './dto/request/update-user.dto';
 import {
   EmailAlreadyExistsError,
   EmailMismatchError,

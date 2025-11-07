@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { UserController } from './controller/user.controller';
-import { UserService } from './service/user.service';
+import { UserController } from './user.controller';
+import { UserService } from './user.service';
 import { PrismaModule } from '@app/prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthModule } from '@app/auth/auth.module';
-import { UserRepository } from './repository/user.repository';
-import { IsImageStorageUrlConstraint } from './validators/is-image-storage-url.constraint';
+import { UserRepository } from './user.repository';
+import { IsImageStorageUrlConstraint } from '../common/validators/is-image-storage-url.constraint';
 
 @Module({
   imports: [
