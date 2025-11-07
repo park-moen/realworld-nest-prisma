@@ -5,12 +5,6 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-
-import {
-  JsonWebTokenError,
-  NotBeforeError,
-  TokenExpiredError,
-} from '@nestjs/jwt';
 import { Request } from 'express';
 
 @Injectable()
@@ -21,34 +15,22 @@ export class AccessTokenGuard implements CanActivate {
     const req = context.switchToHttp().getRequest<Request>();
 
     const authHeader = req.headers.authorization;
-    if (
-      !authHeader ||
-      typeof authHeader !== 'string' ||
-      !authHeader.startsWith('Bearer ')
-    ) {
-      throw new UnauthorizedException(
-        'Missing or invalid Authorization header',
-      );
+    if (!authHeader || typeof authHeader !== 'string') {
+      throw new UnauthorizedException('Missing Authorization header');
+    }
+
+    if (!authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Invalid Authorization header format');
     }
 
     const token = authHeader.slice('Bearer '.length);
-
-    try {
-      const payload = this.authService.verifyAccessToken(token);
-      req.user = { userId: payload.sub, token };
-
-      return true;
-    } catch (error) {
-      if (error instanceof TokenExpiredError) {
-        throw new UnauthorizedException('Access token expired');
-      }
-      if (error instanceof NotBeforeError) {
-        throw new UnauthorizedException('Access token not active yet');
-      }
-      if (error instanceof JsonWebTokenError) {
-        throw new UnauthorizedException('Malformed access token');
-      }
-      throw new UnauthorizedException('Access token verification failed');
+    if (!token) {
+      throw new UnauthorizedException('Missing access token');
     }
+
+    const payload = this.authService.verifyAccessToken(token);
+
+    req.user = { userId: payload.sub, token };
+    return true;
   }
 }

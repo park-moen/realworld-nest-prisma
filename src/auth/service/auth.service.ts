@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtVerifyOptions } from '@nestjs/jwt';
 import {
-  TokenExpiredError,
+  TokenExpiredError as JwtTokenExpiredError,
   JsonWebTokenError,
   NotBeforeError,
 } from '@nestjs/jwt';
@@ -10,6 +10,10 @@ import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { RefreshTokenRepository } from '../repository/refresh-token.repository';
 import { JwtPayload } from '@app/common/types/auth-user';
+import {
+  TokenExpiredError,
+  TokenInvalidError,
+} from '@app/common/errors/auth-domain.error';
 
 @Injectable()
 export class AuthService {
@@ -80,16 +84,28 @@ export class AuthService {
   }
 
   verifyAccessToken(token: string | undefined) {
-    const secret = this.config.get<string>('jwt.accessSecret', 'access');
-    const payload = this.jwtService.verify(token, { secret }) as {
-      sub?: string;
-    };
+    try {
+      const secret = this.config.get<string>('jwt.accessSecret', 'access');
+      const payload = this.jwtService.verify(token, { secret }) as {
+        sub?: string;
+      };
 
-    if (!payload?.sub) {
-      throw new UnauthorizedException('Invalid access token payload');
+      if (!payload?.sub) {
+        throw new TokenInvalidError('access');
+      }
+      return payload;
+    } catch (error) {
+      if (error instanceof JwtTokenExpiredError) {
+        throw new TokenExpiredError('access', error.expiredAt);
+      }
+      if (error instanceof NotBeforeError) {
+        throw new TokenInvalidError('access');
+      }
+      if (error instanceof JsonWebTokenError) {
+        throw new TokenInvalidError('access');
+      }
+      throw new TokenInvalidError('access');
     }
-
-    return payload;
   }
 
   verifyRefreshToken(refresh: string) {
@@ -98,27 +114,23 @@ export class AuthService {
       const options: JwtVerifyOptions = { secret: this.refreshSecret };
       verifyToken = this.jwtService.verify<JwtPayload>(refresh, options);
     } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-
-      if (error instanceof TokenExpiredError) {
-        throw new UnauthorizedException('Refresh token expired');
+      if (error instanceof JwtTokenExpiredError) {
+        throw new TokenExpiredError('refresh', error.expiredAt);
       }
 
       if (error instanceof NotBeforeError) {
-        throw new UnauthorizedException('Token not yet valid');
+        throw new TokenInvalidError('refresh');
       }
 
       if (error instanceof JsonWebTokenError) {
-        throw new UnauthorizedException('Invalid refresh token');
+        throw new TokenInvalidError('refresh');
       }
 
-      throw new UnauthorizedException('Token verification failed');
+      throw new TokenInvalidError('refresh');
     }
 
     if (!verifyToken?.sub || !verifyToken?.jti) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new TokenInvalidError('refresh');
     }
 
     return verifyToken;

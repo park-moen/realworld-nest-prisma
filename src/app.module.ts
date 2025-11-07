@@ -4,10 +4,12 @@ import { PrismaModule } from '@app/prisma/prisma.module';
 import { UserModule } from '@app/user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { FeatureFlagModule } from './core/feature-flag/feature-flag.module';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { FeatureFlagGuard } from './common/guards/feature-flag.guard';
 import { HealthModule } from './health/health.module';
 import configuration from './config/configuration';
+import { UnifiedExceptionFilter } from './common/filters/unified-exception.filter';
+import { CustomValidationPipe } from './common/pipe/custom-validation.pipe';
 
 // ! Config 중앙 집중화에서 리펙토링
 console.log('🔍 NODE_ENV:', process.env.NODE_ENV);
@@ -28,8 +30,16 @@ console.log('🔍 Loading env file:', `.env.${process.env.NODE_ENV || 'local'}`)
   ],
   providers: [
     {
+      provide: APP_PIPE,
+      useClass: CustomValidationPipe,
+    },
+    {
       provide: APP_GUARD,
       useClass: FeatureFlagGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: UnifiedExceptionFilter,
     },
   ],
 })
