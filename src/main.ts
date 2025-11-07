@@ -1,11 +1,6 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
-import {
-  ClassSerializerInterceptor,
-  ConsoleLogger,
-  UnprocessableEntityException,
-  ValidationPipe,
-} from '@nestjs/common';
+import { ClassSerializerInterceptor, ConsoleLogger } from '@nestjs/common';
 import { useContainer } from 'class-validator';
 import * as cookieParser from 'cookie-parser';
 
@@ -16,23 +11,6 @@ async function bootstrap() {
   });
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      forbidUnknownValues: true,
-      exceptionFactory: (errors) => {
-        return new UnprocessableEntityException({
-          message: 'Validation failed',
-          errors: errors.map((e) => ({
-            field: e.property,
-            constraints: e.constraints,
-          })),
-        });
-      },
-    }),
-  );
 
   app.setGlobalPrefix('api');
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));

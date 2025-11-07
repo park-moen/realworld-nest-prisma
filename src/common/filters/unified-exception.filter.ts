@@ -5,6 +5,7 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { DomainError } from '../errors/base-domain.error';
@@ -56,6 +57,18 @@ export class UnifiedExceptionFilter implements ExceptionFilter {
       };
     }
 
+    // 2. Validation Error 처리 (422)
+    if (exception instanceof UnprocessableEntityException) {
+      const response = exception.getResponse() as any;
+
+      return {
+        code: response.code || this.getHttpExceptionCode(402),
+        message: response.message || 'Validation failed',
+        statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+        details: response.details || response.message,
+      };
+    }
+
     // HttpException
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
@@ -91,6 +104,7 @@ export class UnifiedExceptionFilter implements ExceptionFilter {
       403: 'FORBIDDEN',
       404: 'NOT_FOUND',
       409: 'CONFLICT',
+      422: 'VALIDATION.INVALID_INPUT',
       500: 'INTERNAL_SERVER_ERROR',
     };
 
