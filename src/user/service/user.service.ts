@@ -10,6 +10,7 @@ import {
   EmailAlreadyExistsError,
   EmailMismatchError,
   PasswordMismatchError,
+  UsernameAlreadyExistsError,
   UserNotFoundError,
 } from '@app/common/errors/user-domain.error';
 
@@ -29,14 +30,21 @@ export class UserService {
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<UserResponseDto> {
-    const { email, password } = createUserDto;
+    const { email, username, password } = createUserDto;
 
-    const userExists = await this.userRepository.findByEmail(email);
-    // ! UserRepository의 prisma에 의존하고 있어서 EmailAlreadyExistsError에서 Error를 잡지 않고
-    // ! prisma 자체 Error를 반환한다. prisma가 직접 Error를 관리하는게 맞을까?
-    // ! 위의 원인은 동일한 username에 대한 방어 코드가 없어서 prisma에서 바로 http protocol error로 바로 던짐.
+    const userExists = await this.userRepository.findByEmailOrUsername(
+      email,
+      username,
+    );
+
     if (userExists) {
-      throw new EmailAlreadyExistsError(createUserDto.email);
+      if (userExists.email === email) {
+        throw new EmailAlreadyExistsError(email);
+      }
+
+      if (userExists.username === username) {
+        throw new UsernameAlreadyExistsError(username);
+      }
     }
 
     const passwordHashed = await this.authService.hash(password);

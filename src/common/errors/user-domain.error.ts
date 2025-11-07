@@ -4,6 +4,7 @@ import { DomainError } from './base-domain.error';
 enum UserErrorCode {
   USER_NOT_FOUND = 'USER.USER_NOT_FOUND',
   EMAIL_ALREADY_EXISTS = 'USER.EMAIL_ALREADY_EXISTS',
+  USERNAME_ALREADY_EXISTS = 'USER.USERNAME_ALREADY_EXISTS',
   EMAIL_MISMATCH = 'USER.EMAIL_MISMATCH',
   PASSWORD_MISMATCH = 'USER.PASSWORD_MISMATCH',
   INVALID_OLD_PASSWORD = 'USER.INVALID_OLD_PASSWORD',
@@ -29,6 +30,17 @@ export class EmailAlreadyExistsError extends DomainError {
       'Email already exists',
       HttpStatus.CONFLICT,
       { email },
+    );
+  }
+}
+
+export class UsernameAlreadyExistsError extends DomainError {
+  constructor(username: string) {
+    super(
+      UserErrorCode.USERNAME_ALREADY_EXISTS,
+      'Email already exists',
+      HttpStatus.CONFLICT,
+      { username },
     );
   }
 }
