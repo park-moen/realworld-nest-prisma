@@ -201,16 +201,6 @@ export class AuthService {
   }
 
   buildRefreshCookieOptions() {
-    // ! this로 configService 환경변수 추출해야함
-    // const secure = this.config.get<boolean>(
-    //   'cookie.refreshCookieSecret',
-    //   false,
-    // );
-    // const sameSite = this.config.get<string>(
-    //   'cookie.refreshCookieSameSite',
-    //   'lax',
-    // ) as 'lax' | 'strict' | 'none';
-
     const secure = this.refreshCookieSecret;
     const sameSite = this.refreshCookieSameSite as 'lax' | 'strict' | 'none';
 
