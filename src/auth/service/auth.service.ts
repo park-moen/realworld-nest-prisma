@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtVerifyOptions } from '@nestjs/jwt';
 import {
-  TokenExpiredError,
+  TokenExpiredError as JwtTokenExpiredError,
   JsonWebTokenError,
   NotBeforeError,
 } from '@nestjs/jwt';
@@ -10,6 +10,10 @@ import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { RefreshTokenRepository } from '../repository/refresh-token.repository';
 import { JwtPayload } from '@app/common/types/auth-user';
+import {
+  TokenInvalidError,
+  TokenExpiredError,
+} from '@app/common/errors/domain.error';
 
 @Injectable()
 export class AuthService {
@@ -86,7 +90,7 @@ export class AuthService {
     };
 
     if (!payload?.sub) {
-      throw new UnauthorizedException('Invalid access token payload');
+      throw new TokenInvalidError('access');
     }
 
     return payload;
@@ -98,27 +102,23 @@ export class AuthService {
       const options: JwtVerifyOptions = { secret: this.refreshSecret };
       verifyToken = this.jwtService.verify<JwtPayload>(refresh, options);
     } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-
-      if (error instanceof TokenExpiredError) {
-        throw new UnauthorizedException('Refresh token expired');
+      if (error instanceof JwtTokenExpiredError) {
+        throw new TokenExpiredError('refresh');
       }
 
       if (error instanceof NotBeforeError) {
-        throw new UnauthorizedException('Token not yet valid');
+        throw new TokenInvalidError('refresh');
       }
 
       if (error instanceof JsonWebTokenError) {
-        throw new UnauthorizedException('Invalid refresh token');
+        throw new TokenInvalidError('refresh');
       }
 
-      throw new UnauthorizedException('Token verification failed');
+      throw new TokenInvalidError('refresh');
     }
 
     if (!verifyToken?.sub || !verifyToken?.jti) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new TokenInvalidError('refresh');
     }
 
     return verifyToken;
