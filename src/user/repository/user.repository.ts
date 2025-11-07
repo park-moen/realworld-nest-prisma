@@ -21,4 +21,12 @@ export class UserRepository {
   findUserById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { id } });
   }
+
+  findByEmailOrUsername(email: string, username: string): Promise<User | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        OR: [{ email }, { username }],
+      },
+    });
+  }
 }
