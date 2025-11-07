@@ -84,16 +84,28 @@ export class AuthService {
   }
 
   verifyAccessToken(token: string | undefined) {
-    const secret = this.config.get<string>('jwt.accessSecret', 'access');
-    const payload = this.jwtService.verify(token, { secret }) as {
-      sub?: string;
-    };
+    try {
+      const secret = this.config.get<string>('jwt.accessSecret', 'access');
+      const payload = this.jwtService.verify(token, { secret }) as {
+        sub?: string;
+      };
 
-    if (!payload?.sub) {
+      if (!payload?.sub) {
+        throw new TokenInvalidError('access');
+      }
+      return payload;
+    } catch (error) {
+      if (error instanceof JwtTokenExpiredError) {
+        throw new TokenExpiredError('access', error.expiredAt);
+      }
+      if (error instanceof NotBeforeError) {
+        throw new TokenInvalidError('access');
+      }
+      if (error instanceof JsonWebTokenError) {
+        throw new TokenInvalidError('access');
+      }
       throw new TokenInvalidError('access');
     }
-
-    return payload;
   }
 
   verifyRefreshToken(refresh: string) {
@@ -103,7 +115,7 @@ export class AuthService {
       verifyToken = this.jwtService.verify<JwtPayload>(refresh, options);
     } catch (error) {
       if (error instanceof JwtTokenExpiredError) {
-        throw new TokenExpiredError('refresh');
+        throw new TokenExpiredError('refresh', error.expiredAt);
       }
 
       if (error instanceof NotBeforeError) {

@@ -11,12 +11,12 @@ enum AuthErrorCode {
 }
 
 export class TokenExpiredError extends DomainError {
-  constructor(tokenType: 'access' | 'refresh') {
+  constructor(tokenType: 'access' | 'refresh', expiredAt: Date) {
     super(
       AuthErrorCode.TOKEN_EXPIRED,
       `${tokenType} token has expired`,
       HttpStatus.UNAUTHORIZED,
-      { tokenType },
+      { tokenType, expiredAt },
     );
   }
 }

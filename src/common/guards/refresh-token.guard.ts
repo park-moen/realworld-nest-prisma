@@ -5,11 +5,6 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import {
-  JsonWebTokenError,
-  NotBeforeError,
-  TokenExpiredError,
-} from '@nestjs/jwt';
 import { Request } from 'express';
 
 @Injectable()
@@ -25,28 +20,14 @@ export class RefreshTokenGuard implements CanActivate {
       throw new UnauthorizedException('Refresh token is missing');
     }
 
-    try {
-      const payload = this.authService.verifyRefreshToken(token);
+    const payload = this.authService.verifyRefreshToken(token);
 
-      const { sub: userId, jti } = payload;
-      if (!userId || !jti) {
-        throw new UnauthorizedException('Invalid refresh token payload');
-      }
-
-      req.user = { userId, jti, refreshToken: token };
-      return true;
-    } catch (error) {
-      if (error instanceof TokenExpiredError) {
-        throw new UnauthorizedException('Refresh token expired');
-      }
-      if (error instanceof NotBeforeError) {
-        throw new UnauthorizedException('Refresh token not active yet');
-      }
-      if (error instanceof JsonWebTokenError) {
-        throw new UnauthorizedException('Malformed refresh token');
-      }
-      if (error instanceof UnauthorizedException) throw error;
-      throw new UnauthorizedException('Refresh token verification failed');
+    const { sub: userId, jti } = payload;
+    if (!userId || !jti) {
+      throw new UnauthorizedException('Invalid refresh token payload');
     }
+
+    req.user = { userId, jti, refreshToken: token };
+    return true;
   }
 }

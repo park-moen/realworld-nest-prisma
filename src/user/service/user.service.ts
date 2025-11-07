@@ -122,7 +122,7 @@ export class UserService {
     }
     if (record.expiresAt.getTime() <= Date.now()) {
       // ! @nestjs/jwt에서 제공하는 TokenExpiredError를 사용하는게 맞을까? 아니면 내가 만든 Domain Error를 사용하는게 맞을끼?
-      throw new TokenExpiredError('refresh');
+      throw new TokenExpiredError('refresh', record.expiresAt);
     }
 
     const ok = await this.authService.compare(oldToken, record.tokenHash);
