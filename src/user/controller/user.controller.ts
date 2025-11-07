@@ -59,6 +59,7 @@ export class UserController {
     const { result, refreshToken } = await this.userService.login(loginUserDto);
     const cookieName = this.authService.getRefreshCookieName();
     const cookieOptions = this.authService.buildRefreshCookieOptions();
+
     res.cookie(cookieName, refreshToken, cookieOptions);
     return result;
   }
