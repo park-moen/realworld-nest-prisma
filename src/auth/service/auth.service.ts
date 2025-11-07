@@ -27,6 +27,8 @@ export class AuthService {
   private readonly refreshExpires: string;
 
   private readonly cookieName: string;
+  private readonly refreshCookieSecret: boolean;
+  private readonly refreshCookieSameSite: string;
 
   constructor(
     private readonly config: ConfigService,
@@ -47,6 +49,13 @@ export class AuthService {
     this.cookieName = this.config.get<string>(
       'cookie.refreshCookieName',
       'refresh_token',
+    );
+    this.refreshCookieSecret = Boolean(
+      this.config.get<boolean>('cookie.refreshCookieSecret', false),
+    );
+    this.refreshCookieSameSite = this.config.get<string>(
+      'cookie.refreshCookieSameSite',
+      'lax',
     );
   }
 
@@ -193,14 +202,17 @@ export class AuthService {
 
   buildRefreshCookieOptions() {
     // ! this로 configService 환경변수 추출해야함
-    const secure = this.config.get<boolean>(
-      'cookie.refreshCookieSecret',
-      false,
-    );
-    const sameSite = this.config.get<string>(
-      'cookie.refreshCookieSameSite',
-      'lax',
-    ) as 'lax' | 'strict' | 'none';
+    // const secure = this.config.get<boolean>(
+    //   'cookie.refreshCookieSecret',
+    //   false,
+    // );
+    // const sameSite = this.config.get<string>(
+    //   'cookie.refreshCookieSameSite',
+    //   'lax',
+    // ) as 'lax' | 'strict' | 'none';
+
+    const secure = this.refreshCookieSecret;
+    const sameSite = this.refreshCookieSameSite as 'lax' | 'strict' | 'none';
 
     return {
       httpOnly: true,
