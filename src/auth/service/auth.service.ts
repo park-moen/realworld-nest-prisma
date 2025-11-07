@@ -4,15 +4,16 @@ import { JwtService, JwtVerifyOptions } from '@nestjs/jwt';
 import {
   TokenExpiredError as JwtTokenExpiredError,
   JsonWebTokenError,
-  NotBeforeError,
 } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { RefreshTokenRepository } from '../repository/refresh-token.repository';
 import { JwtPayload } from '@app/common/types/auth-user';
 import {
+  RefreshTokenRevokedError,
   TokenExpiredError,
   TokenInvalidError,
+  TokenNotFoundError,
 } from '@app/common/errors/auth-domain.error';
 
 @Injectable()
@@ -83,6 +84,36 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  async rotateRefresh(oldToken: string) {
+    if (!oldToken) {
+      throw new TokenNotFoundError('refresh');
+    }
+
+    const { sub: userId, jti }: { sub: string; jti?: string } =
+      this.verifyRefreshToken(oldToken);
+
+    const record = await this.refreshTokenRepository.findById(jti);
+
+    if (!record) {
+      throw new TokenInvalidError('refresh');
+    }
+    if (record.revokedAt) {
+      throw new RefreshTokenRevokedError(jti);
+    }
+    if (record.expiresAt.getTime() <= Date.now()) {
+      throw new TokenExpiredError('refresh', record.expiresAt);
+    }
+
+    const ok = await this.compare(oldToken, record.tokenHash);
+    if (!ok) {
+      throw new TokenInvalidError('refresh');
+    }
+
+    const { accessToken, refreshToken } = await this.issueRefreshToken(userId);
+
+    return { accessToken, refreshToken };
+  }
+
   verifyAccessToken(token: string | undefined) {
     try {
       const secret = this.config.get<string>('jwt.accessSecret', 'access');
@@ -95,45 +126,40 @@ export class AuthService {
       }
       return payload;
     } catch (error) {
-      if (error instanceof JwtTokenExpiredError) {
-        throw new TokenExpiredError('access', error.expiredAt);
-      }
-      if (error instanceof NotBeforeError) {
-        throw new TokenInvalidError('access');
-      }
-      if (error instanceof JsonWebTokenError) {
-        throw new TokenInvalidError('access');
-      }
-      throw new TokenInvalidError('access');
+      this.handleJwtError(error, 'access');
     }
   }
 
   verifyRefreshToken(refresh: string) {
-    let verifyToken: JwtPayload;
     try {
       const options: JwtVerifyOptions = { secret: this.refreshSecret };
-      verifyToken = this.jwtService.verify<JwtPayload>(refresh, options);
+      const verifyToken: JwtPayload = this.jwtService.verify<JwtPayload>(
+        refresh,
+        options,
+      );
+
+      if (!verifyToken?.sub || !verifyToken?.jti) {
+        throw new TokenInvalidError('refresh');
+      }
+
+      return verifyToken;
     } catch (error) {
-      if (error instanceof JwtTokenExpiredError) {
-        throw new TokenExpiredError('refresh', error.expiredAt);
-      }
+      this.handleJwtError(error, 'refresh');
+    }
+  }
 
-      if (error instanceof NotBeforeError) {
-        throw new TokenInvalidError('refresh');
-      }
-
-      if (error instanceof JsonWebTokenError) {
-        throw new TokenInvalidError('refresh');
-      }
-
-      throw new TokenInvalidError('refresh');
+  private handleJwtError(
+    error: unknown,
+    tokenType: 'access' | 'refresh',
+  ): never {
+    if (error instanceof JwtTokenExpiredError) {
+      throw new TokenExpiredError(tokenType, error.expiredAt);
+    }
+    if (error instanceof JsonWebTokenError) {
+      throw new TokenInvalidError(tokenType);
     }
 
-    if (!verifyToken?.sub || !verifyToken?.jti) {
-      throw new TokenInvalidError('refresh');
-    }
-
-    return verifyToken;
+    throw error;
   }
 
   async hash(value: string): Promise<string> {
