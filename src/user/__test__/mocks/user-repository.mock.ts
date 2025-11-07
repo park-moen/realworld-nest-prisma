@@ -1,4 +1,4 @@
-import { UserRepository } from '@app/user/repository/user.repository';
+import { UserRepository } from '@app/user/user.repository';
 
 export type MockUserRepository = {
   [K in keyof UserRepository]: jest.MockedFunction<UserRepository[K]>;

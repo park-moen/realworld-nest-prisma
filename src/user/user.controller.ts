@@ -9,11 +9,11 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { UserService } from '../service/user.service';
-import { CreateUserDto } from '../dto/request/create-user.dto';
-import { UserResponseDto } from '../dto/response/user.response.dto';
-import { LoginUserDto } from '../dto/request/login-user.dto';
-import { AuthService } from '@app/auth/service/auth.service';
+import { UserService } from './user.service';
+import { CreateUserDto } from './dto/request/create-user.dto';
+import { UserResponseDto } from './dto/response/user.response.dto';
+import { LoginUserDto } from './dto/request/login-user.dto';
+import { AuthService } from '@app/auth/auth.service';
 import { Response } from 'express';
 import { Feature } from '@app/common/decorators/feature.decorator';
 import { FeatureFlagGuard } from '@app/common/guards/feature-flag.guard';
@@ -21,7 +21,7 @@ import { AccessTokenGuard } from '@app/common/guards/access-token.guard';
 import { CurrentUser } from '@app/common/decorators/current-user-decorator';
 import { AuthUser } from '@app/common/types/auth-user';
 import { RefreshTokenGuard } from '@app/common/guards/refresh-token.guard';
-import { UpdateUserDto } from '../dto/request/update-user.dto';
+import { UpdateUserDto } from './dto/request/update-user.dto';
 
 @Controller('users')
 export class UserController {

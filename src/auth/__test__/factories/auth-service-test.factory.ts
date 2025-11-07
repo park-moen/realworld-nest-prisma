@@ -1,5 +1,5 @@
-import { AuthService } from '@app/auth/service/auth.service';
-import { RefreshTokenRepository } from '@app/auth/repository/refresh-token.repository';
+import { AuthService } from '@app/auth/auth.service';
+import { RefreshTokenRepository } from '@app/auth/refresh-token.repository';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
