@@ -1,8 +1,6 @@
 import { AuthService } from '@app/auth/auth.service';
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/request/create-user.dto';
-import { UserResponseDto } from './dto/response/user.response.dto';
-import { UserMapper } from './user.mapper';
 import { UserRepository } from './user.repository';
 import { LoginUserDto } from './dto/request/login-user.dto';
 import { UpdateUserDto } from './dto/request/update-user.dto';
@@ -13,14 +11,12 @@ import {
   UsernameAlreadyExistsError,
   UserNotFoundError,
 } from '@app/common/errors/user-domain.error';
-
-type UpdatePayload = Partial<{
-  username: string;
-  email: string;
-  password: string;
-  image: string | null;
-  bio: string | null;
-}>;
+import {
+  LoginResult,
+  RefreshResult,
+  UpdatePayload,
+  UserResult,
+} from './user.type';
 
 @Injectable()
 export class UserService {
@@ -29,7 +25,7 @@ export class UserService {
     private readonly userRepository: UserRepository,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<UserResponseDto> {
+  async createUser(createUserDto: CreateUserDto): Promise<UserResult> {
     const { email, username, password } = createUserDto;
 
     const userExists = await this.userRepository.findByEmailOrUsername(
@@ -54,14 +50,14 @@ export class UserService {
       password: passwordHashed,
     });
     const token = this.authService.signAccessToken(user.id);
-    const clear = UserMapper.toClearUserDto(user, token);
 
-    return UserMapper.toUserResponse(clear);
+    return {
+      user,
+      accessToken: token,
+    };
   }
 
-  async login(
-    loginUserDto: LoginUserDto,
-  ): Promise<{ result: UserResponseDto; refreshToken: string }> {
+  async login(loginUserDto: LoginUserDto): Promise<LoginResult> {
     const { email, password } = loginUserDto;
 
     const user = await this.userRepository.findByEmail(email);
@@ -77,30 +73,30 @@ export class UserService {
     const { accessToken, refreshToken } =
       await this.authService.issueRefreshToken(user.id);
 
-    const clear = UserMapper.toClearUserDto(user, accessToken);
-
     return {
-      result: UserMapper.toUserResponse(clear),
-      refreshToken: refreshToken,
+      user,
+      accessToken,
+      refreshToken,
     };
   }
 
   async getUserCurrent(
     userId: string | undefined,
     accessToken: string | undefined,
-  ): Promise<any> {
+  ): Promise<UserResult> {
     const user = await this.userRepository.findUserById(userId);
     if (!user) {
       throw new UserNotFoundError(userId);
     }
 
-    const clear = UserMapper.toClearUserDto(user, accessToken);
-
-    return UserMapper.toUserResponse(clear);
+    return { user, accessToken };
   }
 
   // ! 동일한 username, email인 경우 Throw Error & Image, bio는 사용자가 삭제할 수 있음.
-  async updateUser(updateUserDto: UpdateUserDto, token: string) {
+  async updateUser(
+    updateUserDto: UpdateUserDto,
+    token: string,
+  ): Promise<UserResult> {
     const { sub: userId } = this.authService.verifyAccessToken(token);
     const user = await this.userRepository.findUserById(userId);
     if (!user) {
@@ -131,12 +127,13 @@ export class UserService {
 
     const updateUser = await this.userRepository.update(userId, payload);
 
-    const clear = UserMapper.toClearUserDto(updateUser, token);
-
-    return UserMapper.toUserResponse(clear);
+    return {
+      user: updateUser,
+      accessToken: token,
+    };
   }
 
-  async refresh(oldToken: string) {
+  async refresh(oldToken: string): Promise<RefreshResult> {
     return this.authService.rotateRefresh(oldToken);
   }
 }
