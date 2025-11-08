@@ -80,6 +80,7 @@ export class UserService {
     };
   }
 
+  // ! accessToken에 대한 타입과 token 유무를 검증하는 로직이 필요하지 않은가?
   async getUserCurrent(
     userId: string | undefined,
     accessToken: string | undefined,

@@ -73,6 +73,7 @@ export class UserController {
     return UserMapper.toUserResponseFromEntity(user, accessToken);
   }
 
+  // ! Promise<any> 타입을 Promise<UserResponseDto>로 변경해야 한다.
   @UseGuards(AccessTokenGuard)
   @Get('user')
   async getUserCurrent(@CurrentUser() user: AuthUser): Promise<any> {
