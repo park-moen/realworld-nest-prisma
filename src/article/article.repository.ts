@@ -1,6 +1,8 @@
 import { PrismaService } from '@app/prisma/prisma.service';
+import { PrismaTransaction } from '@app/prisma/transaction.type';
 import { Injectable } from '@nestjs/common';
-import { Article, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { include } from './article.select';
 
 @Injectable()
 export class ArticleRepository {
@@ -11,25 +13,17 @@ export class ArticleRepository {
       Prisma.ArticleCreateInput,
       Prisma.ArticleUncheckedCreateInput
     >,
-  ): Promise<Article> {
-    return await this.prisma.article.create({
+    prisma: PrismaTransaction = this.prisma,
+  ) {
+    return await prisma.article.create({
       data: payload,
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            bio: true,
-            image: true,
-          },
-        },
-      },
     });
   }
 
-  async findBySlug(slug: string): Promise<Article | null> {
-    return await this.prisma.article.findUnique({
+  async findBySlug(slug: string, prisma: PrismaTransaction = this.prisma) {
+    return await prisma.article.findUnique({
       where: { slug },
+      include,
     });
   }
 }

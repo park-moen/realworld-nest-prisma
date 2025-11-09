@@ -24,8 +24,8 @@ class ClearArticleDto {
   @Type(() => ClearAuthorDto)
   author: ClearAuthorDto;
 
-  // @Expose()
-  // tagList?: string[];
+  @Expose()
+  tags?: string[];
 
   // @Expose()
   // favorited?: boolean;

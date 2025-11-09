@@ -10,6 +10,8 @@ import { HealthModule } from './health/health.module';
 import configuration from './config/configuration';
 import { UnifiedExceptionFilter } from './common/filters/unified-exception.filter';
 import { ArticleModule } from './article/article.module';
+import { TagModule } from './tag/tag.module';
+import { ArticleToTagModule } from './articleToTag/articleToTag.module';
 
 // ! Config 중앙 집중화에서 리펙토링
 console.log('🔍 NODE_ENV:', process.env.NODE_ENV);
@@ -28,6 +30,8 @@ console.log('🔍 Loading env file:', `.env.${process.env.NODE_ENV || 'local'}`)
     ArticleModule,
     FeatureFlagModule,
     HealthModule,
+    TagModule,
+    ArticleToTagModule,
   ],
   providers: [
     {
