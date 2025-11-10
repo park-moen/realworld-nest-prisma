@@ -1,5 +1,4 @@
-import { Prisma, Tag } from '@prisma/client';
-import { include } from './article.select';
+import { Article } from './entity/article.entity';
 
 // Service Type Scope
 export interface IArticlePayload {
@@ -10,13 +9,6 @@ export interface IArticlePayload {
   body: string;
 }
 
-// Repository Type Scope
-
-export type ArticleWithUserPrismaType = Prisma.ArticleGetPayload<{
-  include: typeof include;
-}>;
-
-export type ArticleWithTagType = {
-  article: ArticleWithUserPrismaType;
-  tagList: Tag[];
+export type ArticleWithTagNamesType = Omit<Article, 'tags'> & {
+  tags: string[];
 };
