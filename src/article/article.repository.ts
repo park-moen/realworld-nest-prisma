@@ -23,11 +23,9 @@ export class ArticleRepository {
   async findBySlug(
     slug: string,
     prisma: PrismaTransaction = this.prisma,
-  ): Promise<
-    Prisma.ArticleGetPayload<{
-      include: typeof include;
-    }>
-  > {
+  ): Promise<Prisma.ArticleGetPayload<{
+    include: typeof include;
+  }> | null> {
     return await prisma.article.findUnique({
       where: { slug },
       include,

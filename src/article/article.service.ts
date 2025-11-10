@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CreateArticleDto } from './dto/request/create-article.dto';
 import slugify from 'slugify';
 import { ArticleRepository } from './article.repository';
-import { SlugAlreadyExistsError } from '@app/common/errors/article-domain.error';
+import {
+  ArticleNotFoundError,
+  SlugAlreadyExistsError,
+} from '@app/common/errors/article-domain.error';
 import { TagService } from '@app/tag/tag.service';
 import { ArticleTransaction } from './article.transaction';
 import { ArticleWithTagNamesType } from './article.type';
@@ -42,10 +45,28 @@ export class ArticleService {
       tagListNormalized,
     );
 
-    const articleRecode = await this.articleRepository.findBySlug(slug);
-    const tagNames = await this.tagService.getTagNames(articleRecode.tags);
+    return await this.findRawBySlugWithTagNames(slug);
+  }
 
-    return { ...articleRecode, tags: tagNames };
+  async getArticleBySlug(slug: string): Promise<ArticleWithTagNamesType> {
+    const articleWithTagNames = await this.findRawBySlugWithTagNames(slug);
+
+    return articleWithTagNames;
+  }
+
+  private async findRawBySlugWithTagNames(
+    slug: string,
+  ): Promise<ArticleWithTagNamesType> {
+    const article = await this.articleRepository.findBySlug(slug);
+    const articleToTag = article.tags;
+
+    if (!article) {
+      throw new ArticleNotFoundError();
+    }
+
+    const tagNames = await this.tagService.getTagNames(articleToTag);
+
+    return { ...article, tags: tagNames };
   }
 
   private generateSlug(title: string): string {
