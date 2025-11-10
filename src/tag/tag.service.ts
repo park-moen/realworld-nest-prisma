@@ -15,7 +15,7 @@ export class TagService {
     return tagList.map((tag) => tag.toLowerCase());
   }
 
-  async getTagNames(articleToTag: IArticleToTag[]) {
+  async getTagNames(articleToTag: IArticleToTag[]): Promise<string[]> {
     const tagIds = articleToTag.map((recode) => recode.tagId);
     const tagList = await this.tagRepository.findTagListByIds(tagIds);
 
