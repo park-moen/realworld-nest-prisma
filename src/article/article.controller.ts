@@ -18,7 +18,7 @@ export class ArticleController {
   async createArticle(
     @CurrentUser() user: AuthUser,
     @Body('article') createArticleDto: CreateArticleDto,
-  ): Promise<ArticleResponseDto | void> {
+  ): Promise<ArticleResponseDto> {
     const article = await this.articleService.createArticle(
       createArticleDto,
       user.userId,
