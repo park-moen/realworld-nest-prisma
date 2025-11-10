@@ -58,7 +58,7 @@ export class ArticleService {
     slug: string,
   ): Promise<ArticleWithTagNamesType> {
     const article = await this.articleRepository.findBySlug(slug);
-    const articleToTag = article.tags;
+    const articleToTag = article?.tags;
 
     if (!article) {
       throw new ArticleNotFoundError();
