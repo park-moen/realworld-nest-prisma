@@ -19,6 +19,12 @@ export class TagService {
     const tagIds = articleToTag.map((recode) => recode.tagId);
     const tagList = await this.tagRepository.findTagListByIds(tagIds);
 
+    if (tagList.length !== tagIds.length) {
+      this.logger.warn(
+        `Missing tags: requested ${tagIds.length}, found ${tagList.length}`,
+      );
+    }
+
     return tagList.map((tag) => tag.name);
   }
 }

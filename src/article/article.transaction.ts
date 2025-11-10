@@ -22,7 +22,9 @@ export class ArticleTransaction {
     tagNames: string[],
   ): Promise<void> {
     const action = async (tx: PrismaTransaction) => {
-      await this.tagRepository.createTagByList(tagNames, tx);
+      if (tagNames.length > 0) {
+        await this.tagRepository.createTagByList(tagNames, tx);
+      }
 
       const tagList = await this.tagRepository.findTagListByTagNames(
         tagNames,
