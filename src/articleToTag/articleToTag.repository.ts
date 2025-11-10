@@ -11,7 +11,7 @@ export class ArticleToTagRepository {
     articleId: string,
     tagList: Tag[],
     prisma: PrismaTransaction = this.prisma,
-  ) {
+  ): Promise<void> {
     await prisma.articleTag.createMany({
       data: tagList.map((tag) => ({
         articleId,

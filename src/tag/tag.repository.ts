@@ -1,6 +1,7 @@
 import { PrismaService } from '@app/prisma/prisma.service';
 import { PrismaTransaction } from '@app/prisma/transaction.type';
 import { Injectable } from '@nestjs/common';
+import { Tag } from '@prisma/client';
 
 @Injectable()
 export class TagRepository {
@@ -19,7 +20,7 @@ export class TagRepository {
   async findTagListByTagNames(
     tagNames: string[],
     prisma: PrismaTransaction = this.prisma,
-  ) {
+  ): Promise<Tag[]> {
     return await prisma.tag.findMany({
       where: {
         name: {
@@ -32,7 +33,7 @@ export class TagRepository {
   async findTagListByIds(
     tagsId: string[],
     prisma: PrismaTransaction = this.prisma,
-  ) {
+  ): Promise<Tag[]> {
     return await prisma.tag.findMany({
       where: {
         id: {
