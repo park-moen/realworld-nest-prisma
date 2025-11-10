@@ -3,6 +3,7 @@ import { DomainError } from './base-domain.error';
 
 enum ArticleErrorCode {
   SLUG_ALREADY_EXISTS = 'ARTICLE.SLUG_ALREADY_EXISTS',
+  ARTICLE_NOT_FOUNT = 'ARTICLE.ARTICLE_NOT_FOUNT',
 }
 
 export class SlugAlreadyExistsError extends DomainError {
@@ -12,6 +13,16 @@ export class SlugAlreadyExistsError extends DomainError {
       'Article slug already exists',
       HttpStatus.CONFLICT,
       { slug },
+    );
+  }
+}
+
+export class ArticleNotFoundError extends DomainError {
+  constructor() {
+    super(
+      ArticleErrorCode.ARTICLE_NOT_FOUNT,
+      'Article not found',
+      HttpStatus.NOT_FOUND,
     );
   }
 }
