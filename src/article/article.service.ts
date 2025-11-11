@@ -8,8 +8,8 @@ import {
 } from '@app/common/errors/article-domain.error';
 import { TagService } from '@app/tag/tag.service';
 import { ArticleTransaction } from './article.transaction';
-import { ArticleWithTagNamesType } from './article.type';
 import { FavoriteService } from '@app/favorite/favorite.service';
+import { ClearArticleDto } from './dto/response/article.response.dto';
 
 @Injectable()
 export class ArticleService {
@@ -28,7 +28,7 @@ export class ArticleService {
   async createArticle(
     createArticleDto: CreateArticleDto,
     authorId: string,
-  ): Promise<ArticleWithTagNamesType> {
+  ): Promise<ClearArticleDto> {
     const slug = this.generateSlug(createArticleDto.title);
 
     await this.validateUniqueSlug(slug);
@@ -47,16 +47,14 @@ export class ArticleService {
       tagListNormalized,
     );
 
-    return await this.findRawBySlugWithTagNames(slug);
+    return await this.getArticleWithCompletedData(slug, authorId);
   }
 
-  async getArticleBySlug(slug: string): Promise<ArticleWithTagNamesType> {
-    const articleWithTagNames = await this.findRawBySlugWithTagNames(slug);
-
-    return articleWithTagNames;
+  async getArticleBySlug(slug: string): Promise<ClearArticleDto> {
+    return await this.getArticleWithCompletedData(slug);
   }
 
-  async addToFavorite(slug: string, userId: string) {
+  async addToFavorite(slug: string, userId: string): Promise<ClearArticleDto> {
     const article = await this.articleRepository.findBySlug(slug);
 
     if (!article) {
@@ -65,17 +63,13 @@ export class ArticleService {
 
     await this.favoriteService.addFavorite(article.id, userId);
 
-    const addFavoriteArticle = await this.findRawBySlugWithTagNames(slug);
-
-    this.logger.log('addFavoriteArticle', addFavoriteArticle);
-
-    return addFavoriteArticle;
+    return await this.getArticleWithCompletedData(slug, userId);
   }
 
   async deleteToFavorite(
     slug: string,
     userId: string,
-  ): Promise<ArticleWithTagNamesType> {
+  ): Promise<ClearArticleDto> {
     const article = await this.articleRepository.findBySlug(slug);
 
     if (!article) {
@@ -84,26 +78,35 @@ export class ArticleService {
 
     await this.favoriteService.deleteFavorite(article.id, userId);
 
-    const deleteFavoriteArticle = await this.findRawBySlugWithTagNames(slug);
-
-    this.logger.log('deleteFavoriteArticle', deleteFavoriteArticle);
-
-    return deleteFavoriteArticle;
+    return await this.getArticleWithCompletedData(slug, userId);
   }
 
-  private async findRawBySlugWithTagNames(
+  private async getArticleWithCompletedData(
     slug: string,
-  ): Promise<ArticleWithTagNamesType> {
+    userId?: string,
+  ): Promise<ClearArticleDto> {
     const article = await this.articleRepository.findBySlug(slug);
-    const articleToTag = article?.tags;
 
     if (!article) {
       throw new ArticleNotFoundError();
     }
 
+    const articleToTag = article?.tags;
     const tagNames = await this.tagService.getTagNames(articleToTag);
 
-    return { ...article, tags: tagNames };
+    const isFavorited = userId
+      ? await this.favoriteService.isFavorited(article.id, userId)
+      : false;
+    const favoritesCount = await this.favoriteService.getFavoritesCount(
+      article.id,
+    );
+
+    return {
+      ...article,
+      tags: tagNames,
+      favorited: isFavorited,
+      favoritesCount,
+    };
   }
 
   private generateSlug(title: string): string {

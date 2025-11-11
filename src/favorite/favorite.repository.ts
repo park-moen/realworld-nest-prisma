@@ -27,4 +27,26 @@ export class FavoriteRepository {
       },
     });
   }
+
+  async exists(
+    articleId: string,
+    userId: string,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<boolean> {
+    const favorite = await prisma.favorite.findUnique({
+      where: {
+        userId_articleId: { userId, articleId },
+      },
+    });
+    return favorite !== null;
+  }
+
+  async countByArticleId(
+    articleId: string,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<number> {
+    return prisma.favorite.count({
+      where: { articleId },
+    });
+  }
 }

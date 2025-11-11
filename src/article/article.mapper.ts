@@ -1,11 +1,11 @@
 import { plainToInstance } from 'class-transformer';
-import { ArticleResponseDto } from './dto/response/article.response.dto';
-import { ArticleWithTagNamesType } from './article.type';
+import {
+  ArticleResponseDto,
+  ClearArticleDto,
+} from './dto/response/article.response.dto';
 
 export class ArticleMapper {
-  static toSingleArticleResponse(
-    article: ArticleWithTagNamesType,
-  ): ArticleResponseDto {
+  static toSingleArticleResponse(article: ClearArticleDto): ArticleResponseDto {
     return plainToInstance(
       ArticleResponseDto,
       { article },
@@ -15,9 +15,7 @@ export class ArticleMapper {
     );
   }
 
-  static toArticlesResponse(
-    articles: ArticleWithTagNamesType[],
-  ): ArticleResponseDto[] {
+  static toArticlesResponse(articles: ClearArticleDto[]): ArticleResponseDto[] {
     return articles.map((article) => this.toSingleArticleResponse(article));
   }
 }

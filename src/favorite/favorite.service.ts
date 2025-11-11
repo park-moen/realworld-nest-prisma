@@ -33,4 +33,12 @@ export class FavoriteService {
       throw error;
     }
   }
+
+  async isFavorited(articleId: string, userId: string): Promise<boolean> {
+    return this.favoriteRepository.exists(articleId, userId);
+  }
+
+  async getFavoritesCount(articleId: string): Promise<number> {
+    return this.favoriteRepository.countByArticleId(articleId);
+  }
 }

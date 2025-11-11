@@ -2,9 +2,6 @@ import { Expose } from 'class-transformer';
 
 export class ClearAuthorDto {
   @Expose()
-  id: string;
-
-  @Expose()
   username: string;
 
   @Expose()
