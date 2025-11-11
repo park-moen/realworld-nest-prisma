@@ -14,7 +14,7 @@ export class FavoriteService {
     try {
       await this.favoriteRepository.create(articleId, userId);
     } catch (error) {
-      if ((error.code = 'P2002')) {
+      if (error.code === 'P2002') {
         throw new FavoriteAlreadyExistsError(articleId, userId);
       }
 
