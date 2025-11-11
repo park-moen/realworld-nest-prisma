@@ -3,7 +3,6 @@ import { Prisma } from '@prisma/client';
 const articleSelect = Prisma.validator<Prisma.ArticleInclude>()({
   author: {
     select: {
-      id: true,
       username: true,
       bio: true,
       image: true,
@@ -15,9 +14,16 @@ const articleSelect = Prisma.validator<Prisma.ArticleInclude>()({
       tagId: true,
     },
   },
+  favorites: {
+    select: {
+      articleId: true,
+      userId: true,
+    },
+  },
 });
 
 export const include = {
   author: articleSelect.author,
   tags: articleSelect.tags,
+  favorites: articleSelect.favorites,
 };

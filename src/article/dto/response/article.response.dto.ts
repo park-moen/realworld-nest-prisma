@@ -1,7 +1,7 @@
 import { Expose, Type } from 'class-transformer';
 import { ClearAuthorDto } from './author.response.dto';
 
-class ClearArticleDto {
+export class ClearArticleDto {
   @Expose()
   slug: string;
 
@@ -27,11 +27,11 @@ class ClearArticleDto {
   @Expose()
   tags?: string[];
 
-  // @Expose()
-  // favorited?: boolean;
+  @Expose()
+  favorited?: boolean;
 
-  //   @Expose()
-  //   favoritesCount?: number;
+  @Expose()
+  favoritesCount?: number;
 }
 
 export class ArticleResponseDto {
