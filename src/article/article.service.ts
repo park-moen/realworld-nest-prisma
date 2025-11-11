@@ -9,6 +9,7 @@ import {
 import { TagService } from '@app/tag/tag.service';
 import { ArticleTransaction } from './article.transaction';
 import { ArticleWithTagNamesType } from './article.type';
+import { FavoriteService } from '@app/favorite/favorite.service';
 
 @Injectable()
 export class ArticleService {
@@ -18,6 +19,7 @@ export class ArticleService {
     private readonly articleRepository: ArticleRepository,
     private readonly articleTransaction: ArticleTransaction,
     private readonly tagService: TagService,
+    private readonly favoriteService: FavoriteService,
   ) {}
 
   // ? Dto타입 사용은 Service가 HTTP 계층에 의존하고 있으며, Domain 로직이 외부 인터페이스에 결합됨
@@ -52,6 +54,41 @@ export class ArticleService {
     const articleWithTagNames = await this.findRawBySlugWithTagNames(slug);
 
     return articleWithTagNames;
+  }
+
+  async addToFavorite(slug: string, userId: string) {
+    const article = await this.articleRepository.findBySlug(slug);
+
+    if (!article) {
+      throw new ArticleNotFoundError();
+    }
+
+    await this.favoriteService.addFavorite(article.id, userId);
+
+    const addFavoriteArticle = await this.findRawBySlugWithTagNames(slug);
+
+    this.logger.log('addFavoriteArticle', addFavoriteArticle);
+
+    return addFavoriteArticle;
+  }
+
+  async deleteToFavorite(
+    slug: string,
+    userId: string,
+  ): Promise<ArticleWithTagNamesType> {
+    const article = await this.articleRepository.findBySlug(slug);
+
+    if (!article) {
+      throw new ArticleNotFoundError();
+    }
+
+    await this.favoriteService.deleteFavorite(article.id, userId);
+
+    const deleteFavoriteArticle = await this.findRawBySlugWithTagNames(slug);
+
+    this.logger.log('deleteFavoriteArticle', deleteFavoriteArticle);
+
+    return deleteFavoriteArticle;
   }
 
   private async findRawBySlugWithTagNames(

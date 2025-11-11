@@ -4,6 +4,7 @@ import { AuthUser } from '@app/common/types/auth-user';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Logger,
   Param,
@@ -41,6 +42,28 @@ export class ArticleController {
     @Param() { slug }: SlugParamDto,
   ): Promise<ArticleResponseDto> {
     const article = await this.articleService.getArticleBySlug(slug);
+
+    return ArticleMapper.toSingleArticleResponse(article);
+  }
+
+  @Post(':slug/favorite')
+  @UseGuards(AccessTokenGuard)
+  async addFavoriteBySlog(
+    @CurrentUser() { userId }: AuthUser,
+    @Param() { slug }: SlugParamDto,
+  ): Promise<ArticleResponseDto> {
+    const article = await this.articleService.addToFavorite(slug, userId);
+
+    return ArticleMapper.toSingleArticleResponse(article);
+  }
+
+  @Delete(':slug/favorite')
+  @UseGuards(AccessTokenGuard)
+  async deleteFavoriteBySlug(
+    @CurrentUser() { userId }: AuthUser,
+    @Param() { slug }: SlugParamDto,
+  ): Promise<ArticleResponseDto> {
+    const article = await this.articleService.deleteToFavorite(slug, userId);
 
     return ArticleMapper.toSingleArticleResponse(article);
   }

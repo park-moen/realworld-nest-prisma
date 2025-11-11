@@ -7,9 +7,16 @@ import { AuthModule } from '@app/auth/auth.module';
 import { TagModule } from '@app/tag/tag.module';
 import { ArticleTransaction } from './article.transaction';
 import { ArticleToTagModule } from '@app/articleToTag/articleToTag.module';
+import { FavoriteModule } from '@app/favorite/favorite.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, TagModule, ArticleToTagModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    TagModule,
+    ArticleToTagModule,
+    FavoriteModule,
+  ],
   providers: [ArticleService, ArticleRepository, ArticleTransaction],
   controllers: [ArticleController],
 })
