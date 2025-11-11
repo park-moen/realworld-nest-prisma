@@ -48,7 +48,7 @@ export class ArticleController {
 
   @Post(':slug/favorite')
   @UseGuards(AccessTokenGuard)
-  async addFavoriteBySlog(
+  async addFavoriteBySlug(
     @CurrentUser() { userId }: AuthUser,
     @Param() { slug }: SlugParamDto,
   ): Promise<ArticleResponseDto> {
