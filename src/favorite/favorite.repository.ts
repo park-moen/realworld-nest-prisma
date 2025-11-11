@@ -11,9 +11,20 @@ export class FavoriteRepository {
     articleId: string,
     userId: string,
     prisma: PrismaTransaction = this.prisma,
-  ) {
-    return await prisma.favorite.create({
+  ): Promise<void> {
+    await prisma.favorite.create({
       data: { articleId, userId },
+    });
+  }
+  async delete(
+    articleId: string,
+    userId: string,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<void> {
+    await prisma.favorite.delete({
+      where: {
+        userId_articleId: { userId, articleId },
+      },
     });
   }
 
