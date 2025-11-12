@@ -20,7 +20,6 @@ export class UpdateArticleDto {
   @IsNotEmpty({ message: 'Body must not be empty' })
   body?: string;
 
-  @Trim()
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
