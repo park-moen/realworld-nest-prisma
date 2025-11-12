@@ -23,11 +23,34 @@ export class ArticleRepository {
   async findBySlug(
     slug: string,
     prisma: PrismaTransaction = this.prisma,
+  ): Promise<Article> {
+    return await prisma.article.findUnique({
+      where: { slug },
+    });
+  }
+
+  async findBySlugWithRelations(
+    slug: string,
+    prisma: PrismaTransaction = this.prisma,
   ): Promise<Prisma.ArticleGetPayload<{
     include: typeof include;
   }> | null> {
     return await prisma.article.findUnique({
       where: { slug },
+      include,
+    });
+  }
+
+  async findByIdWithRelations(
+    id: string,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<
+    Prisma.ArticleGetPayload<{
+      include: typeof include;
+    }>
+  > {
+    return await prisma.article.findUnique({
+      where: { id },
       include,
     });
   }
