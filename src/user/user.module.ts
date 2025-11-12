@@ -23,6 +23,6 @@ import { IsImageStorageUrlConstraint } from '../common/validators/is-image-stora
   ],
   controllers: [UserController],
   providers: [UserService, UserRepository, IsImageStorageUrlConstraint],
-  exports: [IsImageStorageUrlConstraint],
+  exports: [IsImageStorageUrlConstraint, UserService],
 })
 export class UserModule {}
