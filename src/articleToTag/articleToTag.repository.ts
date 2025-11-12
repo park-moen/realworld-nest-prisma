@@ -19,4 +19,13 @@ export class ArticleToTagRepository {
       })),
     });
   }
+
+  async deleteArticleToTAg(
+    articleId: string,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<void> {
+    await prisma.articleTag.deleteMany({
+      where: { articleId },
+    });
+  }
 }

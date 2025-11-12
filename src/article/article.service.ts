@@ -4,6 +4,7 @@ import slugify from 'slugify';
 import { ArticleRepository } from './article.repository';
 import {
   ArticleNotFoundError,
+  ArticleUnauthorizedError,
   SlugAlreadyExistsError,
 } from '@app/common/errors/article-domain.error';
 import { TagService } from '@app/tag/tag.service';
@@ -12,6 +13,8 @@ import { FavoriteService } from '@app/favorite/favorite.service';
 import { ClearArticleDto } from './dto/response/article.response.dto';
 import { Article } from './entity/article.entity';
 import { UserService } from '@app/user/user.service';
+import { UpdateArticleDto } from './dto/request/update-article.dto';
+import { IArticlePayload } from './article.type';
 
 @Injectable()
 export class ArticleService {
@@ -28,6 +31,9 @@ export class ArticleService {
   // ? Dto타입 사용은 Service가 HTTP 계층에 의존하고 있으며, Domain 로직이 외부 인터페이스에 결합됨
   // ? 프로젝트 초기 단계, 빠른 MVP 개발이 목표라서 지금은 Dto 타입을 의존한다
   // ? 추후 규모가 커지거나 다른 프로토콜을 추가하게 된다면 Interface로 분리해야 함.
+
+  // ? slug가 동일한 article은 절대 만들 수 없는가?
+  // ? 만약 동일한 slug에 대해 authorId가 다른 경우 새로운 article을 만들 수 있는 비지니스 규칙이 생기면 추가 검증 작업이 필요함.
   async createArticle(
     createArticleDto: CreateArticleDto,
     authorId: string,
@@ -37,6 +43,7 @@ export class ArticleService {
 
     const { tagList: plainTagList, ...plainArticleDto } = createArticleDto;
     const tagListNormalized = this.tagService.extractTagNames(plainTagList);
+    // ! createPayload라는 점을 부각하기 위해 articleCreatePayload로 변경 예정
     const articlePayload = {
       ...plainArticleDto,
       slug,
@@ -49,6 +56,40 @@ export class ArticleService {
     );
 
     return await this.buildArticleResponse(article, authorId);
+  }
+
+  async updateArticle(
+    slug: string,
+    updateArticleDto: UpdateArticleDto,
+    userId: string,
+  ): Promise<ClearArticleDto> {
+    const article = await this.findArticleBySlug(slug);
+    if (article.authorId !== userId) {
+      throw new ArticleUnauthorizedError(article.id, userId);
+    }
+
+    const articleUpdatePayload: Partial<IArticlePayload> = {
+      ...updateArticleDto,
+    };
+    if (updateArticleDto.title !== undefined) {
+      articleUpdatePayload.title = updateArticleDto.title;
+
+      const newSlug = this.generateSlug(updateArticleDto.title);
+      articleUpdatePayload.slug = newSlug;
+    }
+
+    const tagNames = updateArticleDto.tagList
+      ? this.tagService.extractTagNames(updateArticleDto.tagList)
+      : undefined;
+
+    const updatedArticle =
+      await this.articleTransaction.updateArticleTransaction(
+        article.id,
+        articleUpdatePayload,
+        tagNames,
+      );
+
+    return this.buildArticleResponse(updatedArticle, userId);
   }
 
   async getArticleBySlug(slug: string): Promise<ClearArticleDto> {

@@ -3,6 +3,7 @@ import { PrismaTransaction } from '@app/prisma/transaction.type';
 import { Injectable } from '@nestjs/common';
 import { Article, Prisma } from '@prisma/client';
 import { include } from './article.select';
+import { IArticlePayload } from './article.type';
 
 @Injectable()
 export class ArticleRepository {
@@ -20,12 +21,37 @@ export class ArticleRepository {
     });
   }
 
+  async update(
+    id: string,
+    payload: Partial<IArticlePayload>,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<Article> {
+    return prisma.article.update({
+      where: { id },
+      data: {
+        slug: payload?.slug,
+        title: payload?.title,
+        body: payload?.body,
+        description: payload?.description,
+      },
+    });
+  }
+
   async findBySlug(
     slug: string,
     prisma: PrismaTransaction = this.prisma,
   ): Promise<Article> {
     return await prisma.article.findUnique({
       where: { slug },
+    });
+  }
+
+  async findById(
+    id: string,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<Article> {
+    return await prisma.article.findUnique({
+      where: { id },
     });
   }
 
