@@ -32,7 +32,7 @@ export class ArticleUnauthorizedError extends DomainError {
   constructor(authorId: string, userId: string) {
     super(
       ArticleErrorCode.ARTICLE_UNAUTHORIZED,
-      `${userId} is Not ${authorId}`,
+      `User ${userId} is not authorized to modify article authored by ${authorId}`,
       HttpStatus.UNAUTHORIZED,
       { userId, authorId },
     );
