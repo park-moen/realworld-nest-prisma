@@ -10,6 +10,8 @@ import { TagService } from '@app/tag/tag.service';
 import { ArticleTransaction } from './article.transaction';
 import { FavoriteService } from '@app/favorite/favorite.service';
 import { ClearArticleDto } from './dto/response/article.response.dto';
+import { Article } from './entity/article.entity';
+import { UserService } from '@app/user/user.service';
 
 @Injectable()
 export class ArticleService {
@@ -20,6 +22,7 @@ export class ArticleService {
     private readonly articleTransaction: ArticleTransaction,
     private readonly tagService: TagService,
     private readonly favoriteService: FavoriteService,
+    private readonly userService: UserService,
   ) {}
 
   // ? Dto타입 사용은 Service가 HTTP 계층에 의존하고 있으며, Domain 로직이 외부 인터페이스에 결합됨
@@ -30,81 +33,75 @@ export class ArticleService {
     authorId: string,
   ): Promise<ClearArticleDto> {
     const slug = this.generateSlug(createArticleDto.title);
-
     await this.validateUniqueSlug(slug);
 
     const { tagList: plainTagList, ...plainArticleDto } = createArticleDto;
-
-    const tagListNormalized = this.tagService.tagListNormalized(plainTagList);
+    const tagListNormalized = this.tagService.extractTagNames(plainTagList);
     const articlePayload = {
       ...plainArticleDto,
       slug,
       authorId,
     };
 
-    await this.articleTransaction.createArticleTransaction(
+    const article = await this.articleTransaction.createArticleTransaction(
       articlePayload,
       tagListNormalized,
     );
 
-    return await this.getArticleWithCompletedData(slug, authorId);
+    return await this.buildArticleResponse(article, authorId);
   }
 
   async getArticleBySlug(slug: string): Promise<ClearArticleDto> {
-    return await this.getArticleWithCompletedData(slug);
+    const article = await this.findArticleBySlug(slug);
+
+    return await this.buildArticleResponse(article);
   }
 
   async addToFavorite(slug: string, userId: string): Promise<ClearArticleDto> {
-    const article = await this.articleRepository.findBySlug(slug);
-
-    if (!article) {
-      throw new ArticleNotFoundError();
-    }
-
+    const article = await this.findArticleBySlug(slug);
     await this.favoriteService.addFavorite(article.id, userId);
 
-    return await this.getArticleWithCompletedData(slug, userId);
+    return await this.buildArticleResponse(article, userId);
   }
 
   async deleteToFavorite(
     slug: string,
     userId: string,
   ): Promise<ClearArticleDto> {
-    const article = await this.articleRepository.findBySlug(slug);
-
-    if (!article) {
-      throw new ArticleNotFoundError();
-    }
-
+    const article = await this.findArticleBySlug(slug);
     await this.favoriteService.deleteFavorite(article.id, userId);
 
-    return await this.getArticleWithCompletedData(slug, userId);
+    return await this.buildArticleResponse(article, userId);
   }
 
-  private async getArticleWithCompletedData(
-    slug: string,
-    userId?: string,
-  ): Promise<ClearArticleDto> {
-    const article = await this.articleRepository.findBySlug(slug);
+  private async findArticleBySlug(slug: string): Promise<Article> {
+    const article = await this.articleRepository.findBySlugWithRelations(slug);
 
     if (!article) {
       throw new ArticleNotFoundError();
     }
 
-    const articleToTag = article?.tags;
-    const tagNames = await this.tagService.getTagNames(articleToTag);
+    return article;
+  }
 
-    const isFavorited = userId
-      ? await this.favoriteService.isFavorited(article.id, userId)
-      : false;
-    const favoritesCount = await this.favoriteService.getFavoritesCount(
-      article.id,
-    );
+  private async validateUniqueSlug(slug: string): Promise<void> {
+    const existingArticle = await this.articleRepository.findBySlug(slug);
+
+    if (existingArticle) {
+      throw new SlugAlreadyExistsError(slug);
+    }
+  }
+
+  private async getFavoriteMetadata(userId: string, articleId: string) {
+    const [favorited, favoritesCount] = await Promise.all([
+      userId
+        ? this.favoriteService.isFavorited(articleId, userId)
+        : Promise.resolve(false),
+      this.favoriteService.getFavoritesCount(articleId),
+    ]);
 
     return {
-      ...article,
-      tags: tagNames,
-      favorited: isFavorited,
+      favorited,
       favoritesCount,
     };
   }
@@ -117,11 +114,22 @@ export class ArticleService {
     });
   }
 
-  private async validateUniqueSlug(slug: string): Promise<void> {
-    const existingArticle = await this.articleRepository.findBySlug(slug);
+  private async buildArticleResponse(
+    article: Article,
+    userId?: string,
+  ): Promise<ClearArticleDto> {
+    const author =
+      article.auth ?? (await this.userService.getUserById(article.authorId));
+    const tagNames = article.tags
+      ? await this.tagService.getTagNames(article.tags)
+      : [];
+    const favoriteMetaData = await this.getFavoriteMetadata(userId, article.id);
 
-    if (existingArticle) {
-      throw new SlugAlreadyExistsError(slug);
-    }
+    return {
+      ...article,
+      author,
+      tags: tagNames,
+      ...favoriteMetaData,
+    };
   }
 }

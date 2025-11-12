@@ -1,4 +1,3 @@
-// Service Type Scope
 export interface IArticlePayload {
   slug: string;
   authorId: string;

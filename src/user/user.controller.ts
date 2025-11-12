@@ -78,7 +78,7 @@ export class UserController {
   @Get('user')
   async getUserCurrent(@CurrentUser() user: AuthUser): Promise<any> {
     const { user: userPayload, accessToken } =
-      await this.userService.getUserCurrent(user.userId, user.token);
+      await this.userService.getUserByWithToken(user.userId, user.token);
 
     return UserMapper.toUserResponseFromEntity(userPayload, accessToken);
   }

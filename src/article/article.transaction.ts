@@ -5,6 +5,8 @@ import { TransactionService } from '@app/prisma/transaction.service';
 import { IArticlePayload } from './article.type';
 import { PrismaTransaction } from '@app/prisma/transaction.type';
 import { ArticleToTagRepository } from '@app/articleToTag/articleToTag.repository';
+import { Article } from './entity/article.entity';
+import { TransactionExecutionError } from '@app/common/errors/system.error';
 
 @Injectable()
 export class ArticleTransaction {
@@ -20,25 +22,44 @@ export class ArticleTransaction {
   async createArticleTransaction(
     articlePayload: IArticlePayload,
     tagNames: string[],
-  ): Promise<void> {
+  ): Promise<Article> {
     const action = async (tx: PrismaTransaction) => {
-      if (tagNames.length > 0) {
-        await this.tagRepository.createTagByList(tagNames, tx);
-      }
-
-      const tagList = await this.tagRepository.findTagListByTagNames(
-        tagNames,
-        tx,
-      );
       const article = await this.articleRepository.create(articlePayload, tx);
 
-      await this.articleToTagRepository.createArticleToTag(
-        article.id,
-        tagList,
-        tx,
-      );
+      if (tagNames.length > 0) {
+        await this.tagRepository.createTagByList(tagNames, tx);
+        const tagList = await this.tagRepository.findTagListByTagNames(
+          tagNames,
+          tx,
+        );
+        await this.articleToTagRepository.createArticleToTag(
+          article.id,
+          tagList,
+          tx,
+        );
+      }
+
+      const articleWithRelations =
+        await this.articleRepository.findByIdWithRelations(article.id, tx);
+
+      if (!articleWithRelations) {
+        this.logger.error('Critical: Article not found after creation', {
+          articleId: article.id,
+          payload: articlePayload,
+        });
+
+        throw new TransactionExecutionError( // ✅ System Error
+          'Critical: Article not found after creation',
+          {
+            articleId: article.id,
+            operation: 'createArticle',
+          },
+        );
+      }
+
+      return articleWithRelations;
     };
 
-    await this.transactionService.start(action);
+    return await this.transactionService.start<Article>(action);
   }
 }

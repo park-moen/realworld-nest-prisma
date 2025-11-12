@@ -17,6 +17,7 @@ import {
   UpdatePayload,
   UserResult,
 } from './user.type';
+import { User } from './entity/user.entity';
 
 @Injectable()
 export class UserService {
@@ -80,15 +81,21 @@ export class UserService {
     };
   }
 
-  // ! accessToken에 대한 타입과 token 유무를 검증하는 로직이 필요하지 않은가?
-  async getUserCurrent(
-    userId: string | undefined,
-    accessToken: string | undefined,
-  ): Promise<UserResult> {
+  async getUserById(userId: string): Promise<User> {
     const user = await this.userRepository.findUserById(userId);
+
     if (!user) {
       throw new UserNotFoundError(userId);
     }
+
+    return user;
+  }
+  // ! accessToken에 대한 타입과 token 유무를 검증하는 로직이 필요하지 않은가?
+  async getUserByWithToken(
+    userId: string | undefined,
+    accessToken: string | undefined,
+  ): Promise<UserResult> {
+    const user = await this.getUserById(userId);
 
     return { user, accessToken };
   }

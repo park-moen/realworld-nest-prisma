@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { IArticleToTag } from './tag.type';
 import { TagRepository } from './tag.repository';
+import { ArticleToTag } from '@app/articleToTag/entity/articleToTag.entity';
 
 @Injectable()
 export class TagService {
   private readonly logger = new Logger(TagService.name);
   constructor(private readonly tagRepository: TagRepository) {}
 
-  tagListNormalized(tagList: string[] | undefined): string[] {
+  extractTagNames(tagList: string[] | undefined): string[] {
     if (!tagList) {
       return [];
     }
@@ -15,7 +15,7 @@ export class TagService {
     return tagList.map((tag) => tag.toLowerCase());
   }
 
-  async getTagNames(articleToTag: IArticleToTag[]): Promise<string[]> {
+  async getTagNames(articleToTag: ArticleToTag[]): Promise<string[]> {
     const tagIds = articleToTag.map((recode) => recode.tagId);
     const tagList = await this.tagRepository.findTagListByIds(tagIds);
 
