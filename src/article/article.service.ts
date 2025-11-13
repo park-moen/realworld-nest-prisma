@@ -72,8 +72,6 @@ export class ArticleService {
       ...updateArticleDto,
     };
     if (updateArticleDto.title !== undefined) {
-      articleUpdatePayload.title = updateArticleDto.title;
-
       const newSlug = this.generateSlug(updateArticleDto.title);
       articleUpdatePayload.slug = newSlug;
     }
