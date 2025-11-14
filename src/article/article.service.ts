@@ -65,7 +65,7 @@ export class ArticleService {
   ): Promise<ClearArticleDto> {
     const article = await this.findArticleBySlug(slug);
     if (article.authorId !== userId) {
-      throw new ArticleUnauthorizedError(article.id, userId);
+      throw new ArticleUnauthorizedError(article.authorId, userId);
     }
 
     const articleUpdatePayload: Partial<IArticlePayload> = {
