@@ -103,7 +103,7 @@ export class ArticleTransaction {
       }
 
       if (newTagNames !== undefined) {
-        await this.articleToTagRepository.deleteArticleToTAg(articleId, tx);
+        await this.articleToTagRepository.deleteArticleToTag(articleId, tx);
 
         if (newTagNames.length > 0) {
           await this.tagRepository.createTagByList(newTagNames, tx);

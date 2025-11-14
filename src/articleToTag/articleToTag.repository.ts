@@ -20,7 +20,7 @@ export class ArticleToTagRepository {
     });
   }
 
-  async deleteArticleToTAg(
+  async deleteArticleToTag(
     articleId: string,
     prisma: PrismaTransaction = this.prisma,
   ): Promise<void> {
