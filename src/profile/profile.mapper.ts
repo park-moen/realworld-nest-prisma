@@ -5,7 +5,7 @@ import {
 } from './dto/response/profile.response.dto';
 
 export class ProfileMapper {
-  static toResponseProfile(profile: ProfileDto) {
+  static toResponseProfile(profile: ProfileDto): ProfileResponseDto {
     return plainToInstance(
       ProfileResponseDto,
       { profile },
