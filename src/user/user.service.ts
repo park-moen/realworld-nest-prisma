@@ -99,6 +99,15 @@ export class UserService {
 
     return { user, accessToken };
   }
+  async getUserByName(username: string): Promise<User> {
+    const user = await this.userRepository.findUserByName(username);
+
+    if (!user) {
+      throw new UserNotFoundError(user?.id);
+    }
+
+    return user;
+  }
 
   // ! 동일한 username, email인 경우 Throw Error & Image, bio는 사용자가 삭제할 수 있음.
   async updateUser(
