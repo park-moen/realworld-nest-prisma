@@ -12,6 +12,12 @@ export class ProfileService {
     private readonly followService: FollowService,
   ) {}
 
+  async getProfile(username: string, followerId?: string) {
+    const following = await this.userService.getUserByName(username);
+
+    return this.buildProfileResponse(following, followerId);
+  }
+
   async followProfile(
     username: string,
     followerId: string,
