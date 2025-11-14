@@ -24,13 +24,13 @@ export class FollowRepository {
   }
 
   async exists(followerId: string, followingId: string): Promise<boolean> {
-    const follow = await this.prisma.follow.findFirst({
+    const count = await this.prisma.follow.count({
       where: {
         followerId,
         followingId,
       },
     });
 
-    return !!follow;
+    return count > 0;
   }
 }
