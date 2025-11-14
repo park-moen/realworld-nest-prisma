@@ -9,6 +9,7 @@ import {
   Logger,
   Param,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { CreateArticleDto } from './dto/request/create-article.dto';
@@ -16,6 +17,7 @@ import { ArticleService } from './article.service';
 import { ArticleMapper } from './article.mapper';
 import { ArticleResponseDto } from './dto/response/article.response.dto';
 import { SlugParamDto } from './dto/request/slug-param.dto';
+import { UpdateArticleDto } from './dto/request/update-article.dto';
 
 @Controller('articles')
 export class ArticleController {
@@ -32,6 +34,22 @@ export class ArticleController {
     const article = await this.articleService.createArticle(
       createArticleDto,
       user.userId,
+    );
+
+    return ArticleMapper.toSingleArticleResponse(article);
+  }
+
+  @Put(':slug')
+  @UseGuards(AccessTokenGuard)
+  async updateArticleBySlug(
+    @Param() { slug }: SlugParamDto,
+    @Body('article') updateArticleDto: UpdateArticleDto,
+    @CurrentUser() { userId }: AuthUser,
+  ): Promise<ArticleResponseDto> {
+    const article = await this.articleService.updateArticle(
+      slug,
+      updateArticleDto,
+      userId,
     );
 
     return ArticleMapper.toSingleArticleResponse(article);

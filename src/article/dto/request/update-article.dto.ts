@@ -1,22 +1,24 @@
 import { Trim } from '@app/common/transforms/trim.transform';
 import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-// ! 빈 문자열이 들어오지 못하게 검증
-export class CreateArticleDto {
+export class UpdateArticleDto {
   @Trim()
   @IsString()
   @IsNotEmpty()
-  title: string;
+  @IsOptional()
+  title?: string;
 
   @Trim()
   @IsString()
   @IsNotEmpty()
-  description: string;
+  @IsOptional()
+  description?: string;
 
   @Trim()
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  body: string;
+  @IsNotEmpty({ message: 'Body must not be empty' })
+  body?: string;
 
   @IsArray()
   @IsString({ each: true })
