@@ -145,6 +145,10 @@ export class ArticleService {
     };
   }
 
+  // ! slug속성에 @unique 규약이 있고 title 속성에 @unique 규약이 존재하지 않음.
+  // ! 그렇다면 title이 동일한 article에 대한 article 생성 불가능 비지니스 규칙이 올바른 비지니스 규칙인가?
+  // ! title은 언제든지 동일한 다른 article이 존재할 수 있어야 한다고 생각함
+  // ! Slug 생성 메서드에 articleId의 일부를 추가하는 방법으로 slug 속성만을 고유한 값으로 만드는게 올바름
   private generateSlug(title: string): string {
     return slugify(title, {
       lower: true,

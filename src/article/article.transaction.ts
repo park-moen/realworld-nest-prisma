@@ -89,7 +89,7 @@ export class ArticleTransaction {
           tx,
         );
 
-        if (articleWithSameSlug) {
+        if (articleWithSameSlug && articleWithSameSlug.id !== articleId) {
           throw new SlugAlreadyExistsError(articleUpdatePayload.slug);
         }
       }
