@@ -1,4 +1,35 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { FollowRepository } from './follow.repository';
+import {
+  AlreadyFollowingError,
+  SelfFollowNotAllowedError,
+} from '@app/common/errors/follow-domain.error';
 
 @Injectable()
-export class FollowService {}
+export class FollowService {
+  private readonly logger = new Logger(FollowService.name);
+  constructor(private readonly followRepository: FollowRepository) {}
+
+  async isFollowing(followerId: string, followingId: string): Promise<boolean> {
+    const follow = await this.followRepository.exists(followerId, followingId);
+
+    return !!follow;
+  }
+
+  async followUser(followerId: string, followingId: string): Promise<void> {
+    if (followerId === followingId) {
+      throw new SelfFollowNotAllowedError(followerId, followingId);
+    }
+
+    try {
+      await this.followRepository.create(followerId, followingId);
+    } catch (error) {
+      // ! Prisma에 의존하는 Error를 사용하고 있음
+      if (error.code === 'P2002') {
+        throw new AlreadyFollowingError(followerId, followingId);
+      }
+
+      throw error;
+    }
+  }
+}
