@@ -49,7 +49,7 @@ export class ArticleRepository {
   async findById(
     id: string,
     prisma: PrismaTransaction = this.prisma,
-  ): Promise<Article> {
+  ): Promise<Article | null> {
     return await prisma.article.findUnique({
       where: { id },
     });
