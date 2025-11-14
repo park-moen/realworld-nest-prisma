@@ -22,6 +22,12 @@ export class UserRepository {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
+  async findUserByName(username: string): Promise<User | null> {
+    return await this.prisma.user.findUnique({
+      where: { username },
+    });
+  }
+
   findByEmailOrUsername(email: string, username: string): Promise<User | null> {
     return this.prisma.user.findFirst({
       where: {
