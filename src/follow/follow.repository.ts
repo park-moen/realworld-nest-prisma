@@ -15,6 +15,14 @@ export class FollowRepository {
     });
   }
 
+  async delete(followerId: string, followingId: string): Promise<void> {
+    await this.prisma.follow.delete({
+      where: {
+        followerId_followingId: { followerId, followingId },
+      },
+    });
+  }
+
   async exists(followerId: string, followingId: string): Promise<boolean> {
     const follow = await this.prisma.follow.findFirst({
       where: {
