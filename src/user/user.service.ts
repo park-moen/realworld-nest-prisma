@@ -103,7 +103,7 @@ export class UserService {
     const user = await this.userRepository.findUserByName(username);
 
     if (!user) {
-      throw new UserNotFoundError(user?.id);
+      throw new UserNotFoundError(username);
     }
 
     return user;
