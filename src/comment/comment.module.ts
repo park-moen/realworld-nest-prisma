@@ -5,9 +5,10 @@ import { CommentRepository } from './comment.repository';
 import { CommentController } from './comment.controller';
 import { AuthModule } from '@app/auth/auth.module';
 import { ArticleModule } from '@app/article/article.module';
+import { ProfileModule } from '@app/profile/profile.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, ArticleModule],
+  imports: [PrismaModule, AuthModule, ArticleModule, ProfileModule],
   controllers: [CommentController],
   providers: [CommentService, CommentRepository],
 })
