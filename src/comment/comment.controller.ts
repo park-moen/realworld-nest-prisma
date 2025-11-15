@@ -5,6 +5,7 @@ import { AuthUser } from '@app/common/types/auth-user';
 import {
   Body,
   Controller,
+  Delete,
   Logger,
   Param,
   Post,
@@ -14,6 +15,7 @@ import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/request/create-comment.dto';
 import { SingleCommentResponseDto } from './dto/response/comment.response.dto';
 import { CommentMapper } from './comment.mapper';
+import { deleteCommentParamDto } from './dto/request/delete-comment-param.dto';
 
 @Controller('articles/:slug/comments')
 export class CommentController {
@@ -34,5 +36,13 @@ export class CommentController {
     );
 
     return CommentMapper.toResponseComment(comment);
+  }
+
+  @Delete(':id')
+  @UseGuards(AccessTokenGuard)
+  async deleteComment(
+    @Param() { slug, id }: deleteCommentParamDto,
+  ): Promise<void> {
+    await this.commentService.deleteComment(slug, id);
   }
 }

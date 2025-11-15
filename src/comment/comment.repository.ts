@@ -22,4 +22,13 @@ export class CommentRepository {
 
     return comment;
   }
+
+  async delete(
+    id: string,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<void> {
+    await prisma.comment.delete({
+      where: { id },
+    });
+  }
 }
