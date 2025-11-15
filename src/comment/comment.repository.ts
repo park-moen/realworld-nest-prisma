@@ -13,7 +13,7 @@ export class CommentRepository {
     payload: ICommentCreatePayload,
     prisma: PrismaTransaction = this.prisma,
   ): Promise<Prisma.CommentGetPayload<{ include: { author: boolean } }>> {
-    const comment = prisma.comment.create({
+    const comment = await prisma.comment.create({
       data: payload,
       include: {
         author: true,
