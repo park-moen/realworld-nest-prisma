@@ -63,7 +63,7 @@ export class ArticleService {
     updateArticleDto: UpdateArticleDto,
     userId: string,
   ): Promise<ClearArticleDto> {
-    const article = await this.findArticleBySlug(slug);
+    const article = await this.findBySlugWithRelations(slug);
     if (article.authorId !== userId) {
       throw new ArticleUnauthorizedError(article.authorId, userId);
     }
@@ -91,13 +91,23 @@ export class ArticleService {
   }
 
   async getArticleBySlug(slug: string): Promise<ClearArticleDto> {
-    const article = await this.findArticleBySlug(slug);
+    const article = await this.findBySlugWithRelations(slug);
 
     return await this.buildArticleResponse(article);
   }
 
+  async findArticleBySlug(slug: string): Promise<Article> {
+    const article = await this.articleRepository.findBySlug(slug);
+
+    if (!article) {
+      throw new ArticleNotFoundError();
+    }
+
+    return article;
+  }
+
   async addToFavorite(slug: string, userId: string): Promise<ClearArticleDto> {
-    const article = await this.findArticleBySlug(slug);
+    const article = await this.findBySlugWithRelations(slug);
     await this.favoriteService.addFavorite(article.id, userId);
 
     return await this.buildArticleResponse(article, userId);
@@ -107,13 +117,13 @@ export class ArticleService {
     slug: string,
     userId: string,
   ): Promise<ClearArticleDto> {
-    const article = await this.findArticleBySlug(slug);
+    const article = await this.findBySlugWithRelations(slug);
     await this.favoriteService.deleteFavorite(article.id, userId);
 
     return await this.buildArticleResponse(article, userId);
   }
 
-  private async findArticleBySlug(slug: string): Promise<Article> {
+  private async findBySlugWithRelations(slug: string): Promise<Article> {
     const article = await this.articleRepository.findBySlugWithRelations(slug);
 
     if (!article) {
