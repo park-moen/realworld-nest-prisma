@@ -97,7 +97,7 @@ export class ArticleService {
   }
 
   async findArticleBySlug(slug: string): Promise<Article> {
-    const article = await this.findArticleBySlug(slug);
+    const article = await this.articleRepository.findBySlug(slug);
 
     if (!article) {
       throw new ArticleNotFoundError();
