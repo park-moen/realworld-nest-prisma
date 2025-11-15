@@ -4,11 +4,11 @@ import { CommentService } from './comment.service';
 import { CommentRepository } from './comment.repository';
 import { CommentController } from './comment.controller';
 import { AuthModule } from '@app/auth/auth.module';
+import { ArticleModule } from '@app/article/article.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, ArticleModule],
   controllers: [CommentController],
   providers: [CommentService, CommentRepository],
-  exports: [CommentService],
 })
 export class CommentModule {}
