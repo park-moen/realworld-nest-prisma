@@ -96,7 +96,7 @@ export class ArticleService {
     return await this.buildArticleResponse(article);
   }
 
-  async findArticleBySlug(slug: string): Promise<Article> {
+  async ensureArticleExistsBySlug(slug: string): Promise<Article> {
     const article = await this.articleRepository.findBySlug(slug);
 
     if (!article) {
