@@ -6,13 +6,13 @@ export class CommentDto {
   id: string;
 
   @Expose()
-  createdAt: string;
+  createdAt: Date;
 
   @Expose()
-  updatedAt: string;
+  updatedAt: Date;
 
   @Expose()
-  body: boolean;
+  body: string;
 
   @Expose()
   author: ProfileDto;
