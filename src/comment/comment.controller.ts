@@ -6,6 +6,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Logger,
   Param,
   Post,
@@ -13,9 +14,13 @@ import {
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/request/create-comment.dto';
-import { SingleCommentResponseDto } from './dto/response/comment.response.dto';
+import {
+  MultipleCommentsResponseDto,
+  SingleCommentResponseDto,
+} from './dto/response/comment.response.dto';
 import { CommentMapper } from './comment.mapper';
 import { deleteCommentParamDto } from './dto/request/delete-comment-param.dto';
+import { OptionalAccessTokenGuard } from '@app/common/guards/optional-access-token.guard';
 
 @Controller('articles/:slug/comments')
 export class CommentController {
@@ -36,6 +41,17 @@ export class CommentController {
     );
 
     return CommentMapper.toResponseComment(comment);
+  }
+
+  @Get()
+  @UseGuards(OptionalAccessTokenGuard)
+  async getComments(
+    @Param() { slug }: SlugParamDto,
+    @CurrentUser() user?: AuthUser,
+  ): Promise<MultipleCommentsResponseDto> {
+    const comments = await this.commentService.getComments(slug, user?.userId);
+
+    return CommentMapper.toResponseMultipleComment(comments);
   }
 
   @Delete(':id')

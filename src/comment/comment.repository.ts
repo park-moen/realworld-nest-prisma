@@ -23,6 +23,19 @@ export class CommentRepository {
     return comment;
   }
 
+  async findManyByArticleId(
+    articleId: string,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<Prisma.CommentGetPayload<{ include: { author: boolean } }>[]> {
+    return await prisma.comment.findMany({
+      where: { articleId },
+      include: {
+        author: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async delete(
     id: string,
     prisma: PrismaTransaction = this.prisma,

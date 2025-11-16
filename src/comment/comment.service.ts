@@ -34,6 +34,18 @@ export class CommentService {
     return this.buildCommentResponse(comment);
   }
 
+  async getComments(slug: string, userId: string): Promise<CommentDto[]> {
+    const article = await this.articleService.ensureArticleExistsBySlug(slug);
+
+    const comments = await this.commentRepository.findManyByArticleId(
+      article.id,
+    );
+
+    return Promise.all(
+      comments.map((comment) => this.buildCommentResponse(comment, userId)),
+    );
+  }
+
   async deleteComment(slug: string, commentId: string): Promise<void> {
     await this.articleService.ensureArticleExistsBySlug(slug);
 
@@ -49,9 +61,13 @@ export class CommentService {
     }
   }
 
-  private async buildCommentResponse(comment: Comment): Promise<CommentDto> {
+  private async buildCommentResponse(
+    comment: Comment,
+    userId?: string,
+  ): Promise<CommentDto> {
     const author = await this.profileService.getProfile(
       comment.author.username,
+      userId,
     );
 
     return {
