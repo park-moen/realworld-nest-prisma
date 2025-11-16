@@ -9,5 +9,6 @@ import { FollowModule } from '@app/follow/follow.module';
   imports: [AuthModule, UserModule, FollowModule],
   providers: [ProfileService],
   controllers: [ProfileController],
+  exports: [ProfileService],
 })
 export class ProfileModule {}

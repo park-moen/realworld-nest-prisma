@@ -15,6 +15,7 @@ import { ArticleToTagModule } from './articleToTag/articleToTag.module';
 import { CustomValidationPipe } from './common/pipe/custom-validation.pipe';
 import { FavoriteModule } from './favorite/favorite.module';
 import { ProfileModule } from './profile/profile.module';
+import { CommentModule } from './comment/comment.module';
 
 // ! Config 중앙 집중화에서 리펙토링
 console.log('🔍 NODE_ENV:', process.env.NODE_ENV);
@@ -35,6 +36,7 @@ console.log('🔍 Loading env file:', `.env.${process.env.NODE_ENV || 'local'}`)
     FeatureFlagModule,
     HealthModule,
     TagModule,
+    CommentModule,
     ArticleToTagModule,
     FavoriteModule,
   ],
