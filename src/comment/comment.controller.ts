@@ -58,7 +58,8 @@ export class CommentController {
   @UseGuards(AccessTokenGuard)
   async deleteComment(
     @Param() { slug, id }: deleteCommentParamDto,
+    @CurrentUser() user: AuthUser,
   ): Promise<void> {
-    await this.commentService.deleteComment(slug, id);
+    await this.commentService.deleteComment(slug, id, user.userId);
   }
 }

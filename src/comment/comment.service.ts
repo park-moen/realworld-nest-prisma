@@ -6,7 +6,10 @@ import { ICommentCreatePayload } from './comment.type';
 import { ProfileService } from '@app/profile/profile.service';
 import { Comment } from './entity/comment.entity';
 import { CommentDto } from './dto/response/comment.response.dto';
-import { CommentNotFoundError } from '@app/common/errors/comment-domain.error';
+import {
+  CommentAuthorMismatchError,
+  CommentNotFoundError,
+} from '@app/common/errors/comment-domain.error';
 
 @Injectable()
 export class CommentService {
@@ -46,19 +49,23 @@ export class CommentService {
     );
   }
 
-  async deleteComment(slug: string, commentId: string): Promise<void> {
+  async deleteComment(
+    slug: string,
+    commentId: string,
+    userId: string,
+  ): Promise<void> {
     await this.articleService.ensureArticleExistsBySlug(slug);
+    const comment = await this.commentRepository.findByCommentId(commentId);
 
-    // ! Prisma에 의존하는 Error를 사용하고 있음
-    try {
-      await this.commentRepository.delete(commentId);
-    } catch (error) {
-      if (error.code === 'P2025') {
-        throw new CommentNotFoundError();
-      }
-
-      throw error;
+    if (!comment) {
+      throw new CommentNotFoundError();
     }
+
+    if (comment.authorId !== userId) {
+      throw new CommentAuthorMismatchError();
+    }
+
+    await this.commentRepository.delete(commentId);
   }
 
   private async buildCommentResponse(

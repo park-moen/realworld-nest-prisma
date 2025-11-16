@@ -2,7 +2,7 @@ import { PrismaService } from '@app/prisma/prisma.service';
 import { PrismaTransaction } from '@app/prisma/transaction.type';
 import { Injectable, Logger } from '@nestjs/common';
 import { ICommentCreatePayload } from './comment.type';
-import { Prisma } from '@prisma/client';
+import { Comment, Prisma } from '@prisma/client';
 
 @Injectable()
 export class CommentRepository {
@@ -33,6 +33,15 @@ export class CommentRepository {
         author: true,
       },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findByCommentId(
+    commentId: string,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<Comment | null> {
+    return await prisma.comment.findUnique({
+      where: { id: commentId },
     });
   }
 
