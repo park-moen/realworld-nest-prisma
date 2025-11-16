@@ -71,7 +71,7 @@ export class ArticleController {
   @UseGuards(OptionalAccessTokenGuard)
   async getArticleListWithFilter(
     @Query() query: ListArticlesQueryDto,
-    //  author.favorited 필드 값이 "내가 좋아요를 눌렀는지 boolean 결과 반환 (인증 ✅, 권한 ❌)"
+    //  article.favorited 필드 값이 "내가 좋아요를 눌렀는지" boolean 결과 반환 (인증 ✅, 권한 ❌)
     @CurrentUser() user?: AuthUser,
   ): Promise<ArticleResponseDto[]> {
     const articles = await this.articleService.getListArticles(
