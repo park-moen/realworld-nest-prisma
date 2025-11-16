@@ -4,7 +4,7 @@ import { CreateCommentDto } from './dto/request/create-comment.dto';
 import { ArticleService } from '@app/article/article.service';
 import { ICommentCreatePayload } from './comment.type';
 import { ProfileService } from '@app/profile/profile.service';
-import { Comment } from './entity/comment.entity';
+import { CommentWithAuthor } from './entity/comment.entity';
 import { CommentDto } from './dto/response/comment.response.dto';
 import {
   CommentAuthorMismatchError,
@@ -69,7 +69,7 @@ export class CommentService {
   }
 
   private async buildCommentResponse(
-    comment: Comment,
+    comment: CommentWithAuthor,
     userId?: string,
   ): Promise<CommentDto> {
     const author = await this.profileService.getProfile(

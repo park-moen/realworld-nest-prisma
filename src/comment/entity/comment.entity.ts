@@ -7,6 +7,8 @@ export class Comment {
   articleId: string;
   createdAt: Date;
   updatedAt: Date;
+}
 
-  author?: User;
+export class CommentWithAuthor extends Comment {
+  author: User;
 }
