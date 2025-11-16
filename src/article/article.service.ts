@@ -14,7 +14,7 @@ import { ClearArticleDto } from './dto/response/article.response.dto';
 import { Article } from './entity/article.entity';
 import { UserService } from '@app/user/user.service';
 import { UpdateArticleDto } from './dto/request/update-article.dto';
-import { IArticlePayload } from './article.type';
+import { IArticleFilterParams, IArticlePayload } from './article.type';
 
 @Injectable()
 export class ArticleService {
@@ -88,6 +88,18 @@ export class ArticleService {
       );
 
     return this.buildArticleResponse(updatedArticle, userId);
+  }
+
+  async getListArticles(
+    query: IArticleFilterParams,
+    userId?: string,
+  ): Promise<ClearArticleDto[]> {
+    const articles =
+      await this.articleRepository.findManyByQueryWithRelations(query);
+
+    return await Promise.all(
+      articles.map((article) => this.buildArticleResponse(article, userId)),
+    );
   }
 
   async getArticleBySlug(slug: string): Promise<ClearArticleDto> {

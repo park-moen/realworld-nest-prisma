@@ -1,12 +1,13 @@
 import { PrismaService } from '@app/prisma/prisma.service';
 import { PrismaTransaction } from '@app/prisma/transaction.type';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Article, Prisma } from '@prisma/client';
 import { include } from './article.select';
-import { IArticlePayload } from './article.type';
+import { IArticleFilterParams, IArticlePayload } from './article.type';
 
 @Injectable()
 export class ArticleRepository {
+  private readonly logger = new Logger(ArticleRepository.name);
   constructor(private readonly prisma: PrismaService) {}
 
   async create(
@@ -79,5 +80,64 @@ export class ArticleRepository {
       where: { id },
       include,
     });
+  }
+
+  async findManyByQueryWithRelations(
+    queryParams: IArticleFilterParams,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<
+    Prisma.ArticleGetPayload<{
+      include: typeof include;
+    }>[]
+  > {
+    const where = this.prepareWhereParams(queryParams);
+
+    return await prisma.article.findMany({
+      include,
+      where,
+      take: queryParams.limit,
+      skip: queryParams.offset,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  private prepareWhereParams(
+    params: IArticleFilterParams,
+  ): Prisma.ArticleWhereInput {
+    const and: Prisma.ArticleWhereInput[] = [];
+
+    if (params.tag) {
+      and.push({
+        tags: {
+          some: {
+            tag: {
+              name: params.tag,
+            },
+          },
+        },
+      });
+    }
+
+    if (params.author) {
+      and.push({
+        author: {
+          username: params.author,
+        },
+      });
+    }
+
+    if (params.favorited) {
+      and.push({
+        favorites: {
+          some: {
+            user: {
+              username: params.favorited,
+            },
+          },
+        },
+      });
+    }
+
+    return and.length ? { AND: and } : {};
   }
 }
