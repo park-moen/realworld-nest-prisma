@@ -1,4 +1,4 @@
-import { SlugParamDto } from '@app/article/dto/request/slug-param.dto';
+import { SlugParamDto } from '@app/common/dto/request/slug-param.dto';
 import { CurrentUser } from '@app/common/decorators/current-user-decorator';
 import { AccessTokenGuard } from '@app/common/guards/access-token.guard';
 import { AuthUser } from '@app/common/types/auth-user';

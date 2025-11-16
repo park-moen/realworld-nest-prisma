@@ -16,7 +16,7 @@ import { CreateArticleDto } from './dto/request/create-article.dto';
 import { ArticleService } from './article.service';
 import { ArticleMapper } from './article.mapper';
 import { ArticleResponseDto } from './dto/response/article.response.dto';
-import { SlugParamDto } from './dto/request/slug-param.dto';
+import { SlugParamDto } from '@app/common/dto/request/slug-param.dto';
 import { UpdateArticleDto } from './dto/request/update-article.dto';
 
 @Controller('articles')
