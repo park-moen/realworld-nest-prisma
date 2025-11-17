@@ -10,14 +10,20 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CreateArticleDto } from './dto/request/create-article.dto';
 import { ArticleService } from './article.service';
 import { ArticleMapper } from './article.mapper';
-import { ArticleResponseDto } from './dto/response/article.response.dto';
+import {
+  ArticleResponseDto,
+  MultipleArticleResponseDto,
+} from './dto/response/article.response.dto';
 import { SlugParamDto } from '@app/common/dto/request/slug-param.dto';
 import { UpdateArticleDto } from './dto/request/update-article.dto';
+import { OptionalAccessTokenGuard } from '@app/common/guards/optional-access-token.guard';
+import { ListArticlesQueryDto } from './dto/request/list-articles-query.dto';
 
 @Controller('articles')
 export class ArticleController {
@@ -62,6 +68,19 @@ export class ArticleController {
     const article = await this.articleService.getArticleBySlug(slug);
 
     return ArticleMapper.toSingleArticleResponse(article);
+  }
+
+  @Get()
+  @UseGuards(OptionalAccessTokenGuard)
+  async getArticleListWithFilter(
+    @Query() query: ListArticlesQueryDto,
+    //  article.favorited 필드 값이 "내가 좋아요를 눌렀는지" boolean 결과 반환 (인증 ✅, 권한 ❌)
+    @CurrentUser() user?: AuthUser,
+  ): Promise<MultipleArticleResponseDto> {
+    const { articles, articlesCount } =
+      await this.articleService.getListArticles(query, user?.userId);
+
+    return ArticleMapper.toMultiArticleResponse(articles, articlesCount);
   }
 
   @Post(':slug/favorite')

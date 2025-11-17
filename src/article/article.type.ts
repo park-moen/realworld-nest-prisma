@@ -5,3 +5,11 @@ export interface IArticlePayload {
   description: string;
   body: string;
 }
+
+export interface IArticleFilterParams {
+  tag?: string;
+  author?: string;
+  favorited?: string;
+  limit?: number;
+  offset?: number;
+}
