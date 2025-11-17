@@ -93,13 +93,16 @@ export class ArticleService {
   async getListArticles(
     query: IArticleFilterParams,
     userId?: string,
-  ): Promise<ClearArticleDto[]> {
+  ): Promise<{ articles: ClearArticleDto[]; articlesCount: number }> {
     const articles =
       await this.articleRepository.findManyByQueryWithRelations(query);
 
-    return await Promise.all(
+    const detailedArticles = await Promise.all(
       articles.map((article) => this.buildArticleResponse(article, userId)),
     );
+    const articlesCount = await this.articleRepository.countFeed(query);
+
+    return { articles: detailedArticles, articlesCount };
   }
 
   async getArticleBySlug(slug: string): Promise<ClearArticleDto> {

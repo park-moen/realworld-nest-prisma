@@ -40,3 +40,14 @@ export class ArticleResponseDto {
   @Type(() => ClearArticleDto)
   article: ClearArticleDto;
 }
+
+// export class Article
+
+export class MultipleArticleResponseDto {
+  @Expose()
+  @Type(() => ClearArticleDto)
+  articles: ArticleResponseDto[];
+
+  @Expose()
+  articlesCount: number;
+}

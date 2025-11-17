@@ -101,6 +101,15 @@ export class ArticleRepository {
     });
   }
 
+  async countFeed(
+    queryParams: IArticleFilterParams,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<number> {
+    const where = this.prepareWhereParams(queryParams);
+
+    return await prisma.article.count({ where });
+  }
+
   private prepareWhereParams(
     params: IArticleFilterParams,
   ): Prisma.ArticleWhereInput {
