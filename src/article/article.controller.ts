@@ -67,7 +67,7 @@ export class ArticleController {
   async deleteArticleBySlug(
     @Param() { slug }: SlugParamDto,
     @CurrentUser() user: AuthUser,
-  ) {
+  ): Promise<void> {
     await this.articleService.deleteArticle(slug, user.userId);
   }
 
