@@ -15,6 +15,7 @@ import { Article } from './entity/article.entity';
 import { UserService } from '@app/user/user.service';
 import { UpdateArticleDto } from './dto/request/update-article.dto';
 import { IArticleFilterParams, IArticlePayload } from './article.type';
+import { FollowService } from '@app/follow/follow.service';
 
 @Injectable()
 export class ArticleService {
@@ -26,6 +27,7 @@ export class ArticleService {
     private readonly tagService: TagService,
     private readonly favoriteService: FavoriteService,
     private readonly userService: UserService,
+    private readonly followService: FollowService,
   ) {}
 
   // ? Dto타입 사용은 Service가 HTTP 계층에 의존하고 있으며, Domain 로직이 외부 인터페이스에 결합됨
@@ -101,6 +103,22 @@ export class ArticleService {
       articles.map((article) => this.buildArticleResponse(article, userId)),
     );
     const articlesCount = await this.articleRepository.countFeed(query);
+
+    return { articles: detailedArticles, articlesCount };
+  }
+
+  async getArticlesFeed(
+    query: IArticleFilterParams,
+    followerId: string,
+  ): Promise<{ articles: ClearArticleDto[]; articlesCount: number }> {
+    const authorIds = await this.followService.getFollowingIds(followerId);
+    const [articles, articlesCount] = await Promise.all([
+      this.articleRepository.findManyByAuthorIds(authorIds, query),
+      this.articleRepository.countFollow(authorIds),
+    ]);
+    const detailedArticles = await Promise.all(
+      articles.map((article) => this.buildArticleResponse(article, followerId)),
+    );
 
     return { articles: detailedArticles, articlesCount };
   }

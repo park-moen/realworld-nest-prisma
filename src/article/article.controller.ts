@@ -24,6 +24,7 @@ import { SlugParamDto } from '@app/common/dto/request/slug-param.dto';
 import { UpdateArticleDto } from './dto/request/update-article.dto';
 import { OptionalAccessTokenGuard } from '@app/common/guards/optional-access-token.guard';
 import { ListArticlesQueryDto } from './dto/request/list-articles-query.dto';
+import { PaginationQueryDto } from './dto/request/pagination-query.dto';
 
 @Controller('articles')
 export class ArticleController {
@@ -59,6 +60,18 @@ export class ArticleController {
     );
 
     return ArticleMapper.toSingleArticleResponse(article);
+  }
+
+  @Get('feed')
+  @UseGuards(AccessTokenGuard)
+  async getArticlesFeed(
+    @CurrentUser() user: AuthUser,
+    @Query() query: PaginationQueryDto,
+  ): Promise<MultipleArticleResponseDto> {
+    const { articles, articlesCount } =
+      await this.articleService.getArticlesFeed(query, user.userId);
+
+    return ArticleMapper.toMultiArticleResponse(articles, articlesCount);
   }
 
   @Get(':slug')

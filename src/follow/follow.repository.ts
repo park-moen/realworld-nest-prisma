@@ -33,4 +33,13 @@ export class FollowRepository {
 
     return count > 0;
   }
+
+  async findByFollowerId(
+    followerId: string,
+  ): Promise<{ followingId: string }[]> {
+    return await this.prisma.follow.findMany({
+      where: { followerId },
+      select: { followingId: true },
+    });
+  }
 }

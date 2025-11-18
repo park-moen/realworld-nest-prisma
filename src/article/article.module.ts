@@ -9,6 +9,7 @@ import { ArticleTransaction } from './article.transaction';
 import { ArticleToTagModule } from '@app/articleToTag/articleToTag.module';
 import { FavoriteModule } from '@app/favorite/favorite.module';
 import { UserModule } from '@app/user/user.module';
+import { FollowModule } from '@app/follow/follow.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UserModule } from '@app/user/user.module';
     ArticleToTagModule,
     FavoriteModule,
     UserModule,
+    FollowModule,
   ],
   providers: [ArticleService, ArticleRepository, ArticleTransaction],
   controllers: [ArticleController],
