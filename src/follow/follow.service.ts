@@ -11,6 +11,13 @@ export class FollowService {
   private readonly logger = new Logger(FollowService.name);
   constructor(private readonly followRepository: FollowRepository) {}
 
+  async getFollowingIds(followerId: string): Promise<string[]> {
+    const followingIds =
+      await this.followRepository.findByFollowerId(followerId);
+
+    return followingIds.map((follow) => follow.followingId);
+  }
+
   async isFollowing(followerId: string, followingId: string): Promise<boolean> {
     const follow = await this.followRepository.exists(followerId, followingId);
 

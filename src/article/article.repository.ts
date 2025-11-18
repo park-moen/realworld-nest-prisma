@@ -101,6 +101,24 @@ export class ArticleRepository {
     });
   }
 
+  async findManyByAuthorIds(
+    authorIds: string[],
+    queryParams: IArticleFilterParams,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<Prisma.ArticleGetPayload<{ include: typeof include }>[]> {
+    return await prisma.article.findMany({
+      where: {
+        authorId: {
+          in: authorIds,
+        },
+      },
+      include,
+      take: queryParams.limit,
+      skip: queryParams.offset,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async countFeed(
     queryParams: IArticleFilterParams,
     prisma: PrismaTransaction = this.prisma,
@@ -108,6 +126,17 @@ export class ArticleRepository {
     const where = this.prepareWhereParams(queryParams);
 
     return await prisma.article.count({ where });
+  }
+
+  async countFollow(
+    authorIds: string[],
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<number> {
+    return await prisma.article.count({
+      where: {
+        authorId: { in: authorIds },
+      },
+    });
   }
 
   private prepareWhereParams(
