@@ -92,6 +92,15 @@ export class ArticleService {
     return this.buildArticleResponse(updatedArticle, userId);
   }
 
+  async deleteArticle(slug: string, userId: string): Promise<void> {
+    const { authorId } = await this.ensureArticleExistsBySlug(slug);
+    if (authorId !== userId) {
+      throw new ArticleUnauthorizedError(authorId, userId);
+    }
+
+    await this.articleRepository.delete(slug);
+  }
+
   async getListArticles(
     query: IArticleFilterParams,
     userId?: string,
