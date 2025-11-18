@@ -62,6 +62,15 @@ export class ArticleController {
     return ArticleMapper.toSingleArticleResponse(article);
   }
 
+  @Delete(':slug')
+  @UseGuards(AccessTokenGuard)
+  async deleteArticleBySlug(
+    @Param() { slug }: SlugParamDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    await this.articleService.deleteArticle(slug, user.userId);
+  }
+
   @Get('feed')
   @UseGuards(AccessTokenGuard)
   async getArticlesFeed(

@@ -38,6 +38,13 @@ export class ArticleRepository {
     });
   }
 
+  async delete(
+    slug: string,
+    prisma: PrismaTransaction = this.prisma,
+  ): Promise<void> {
+    await prisma.article.delete({ where: { slug } });
+  }
+
   async findBySlug(
     slug: string,
     prisma: PrismaTransaction = this.prisma,
