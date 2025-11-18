@@ -113,8 +113,8 @@ export class ArticleService {
   ): Promise<{ articles: ClearArticleDto[]; articlesCount: number }> {
     const authorIds = await this.followService.getFollowingIds(followerId);
     const [articles, articlesCount] = await Promise.all([
-      await this.articleRepository.findManyByAuthorIds(authorIds, query),
-      await this.articleRepository.countFollow(authorIds),
+      this.articleRepository.findManyByAuthorIds(authorIds, query),
+      this.articleRepository.countFollow(authorIds),
     ]);
     const detailedArticles = await Promise.all(
       articles.map((article) => this.buildArticleResponse(article, followerId)),
