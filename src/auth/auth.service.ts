@@ -29,12 +29,15 @@ export class AuthService {
   private readonly cookieName: string;
   private readonly refreshCookieSecret: boolean;
   private readonly refreshCookieSameSite: string;
+  private readonly nodeEnv: string;
 
   constructor(
     private readonly config: ConfigService,
     private readonly jwtService: JwtService,
     private readonly refreshTokenRepository: RefreshTokenRepository,
   ) {
+    this.nodeEnv = this.config.get<string>('nodeEnv', 'local');
+
     this.round = Number(config.get('hasher.round') ?? 12);
 
     this.accessSecret = this.config.get<string>('jwt.accessSecret', 'access');
@@ -201,7 +204,7 @@ export class AuthService {
   }
 
   buildRefreshCookieOptions() {
-    const secure = this.refreshCookieSecret;
+    const secure = this.nodeEnv === 'staging';
     const sameSite = this.refreshCookieSameSite as 'lax' | 'strict' | 'none';
 
     return {
