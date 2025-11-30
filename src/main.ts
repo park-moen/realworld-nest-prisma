@@ -23,11 +23,49 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+      // Origin이 없는 경우 (서버 간 요청)
+      if (!origin) {
+        return callback(null, true);
       }
+
+      // 디버깅용 로그
+      console.log('🔍 Received Origin:', origin);
+      console.log('✅ Configured Origins:', allowedOrigins);
+
+      // 정확한 매칭 확인
+      if (allowedOrigins.includes(origin)) {
+        console.log('✅ Exact match - allowed');
+        return callback(null, true);
+      }
+
+      // 와일드카드 패턴 매칭
+      const isAllowed = allowedOrigins.some((allowedOrigin) => {
+        // 와일드카드가 포함된 경우 regex로 변환
+        if (allowedOrigin.includes('*')) {
+          // https://*.vercel.app -> ^https://.*\.vercel\.app$
+          const regexPattern = allowedOrigin
+            .replace(/\./g, '\\.') // . → \.
+            .replace(/\*/g, '[^.]+'); // * → [^.]+ (서브도메인 매칭)
+
+          const regex = new RegExp(`^${regexPattern}$`);
+          const isMatch = regex.test(origin);
+
+          if (isMatch) {
+            console.log(`✅ Wildcard match - Pattern: ${regexPattern}`);
+          }
+
+          return isMatch;
+        }
+        return false;
+      });
+
+      if (isAllowed) {
+        return callback(null, true);
+      }
+
+      // CORS 차단
+      console.warn(`❌ CORS blocked - Origin not allowed: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
