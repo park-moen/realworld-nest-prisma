@@ -27,4 +27,10 @@ export class TagService {
 
     return tagList.map((tag) => tag.name);
   }
+
+  async findAllTagList(): Promise<string[]> {
+    const tagsRecord = await this.tagRepository.findManyTags();
+
+    return tagsRecord.map(({ name }) => name);
+  }
 }

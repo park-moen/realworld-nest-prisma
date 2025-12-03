@@ -42,4 +42,8 @@ export class TagRepository {
       },
     });
   }
+
+  async findManyTags(prisma: PrismaTransaction = this.prisma): Promise<Tag[]> {
+    return await prisma.tag.findMany();
+  }
 }
